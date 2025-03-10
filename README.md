@@ -1,3 +1,6 @@
+> [!NOTE]  
+> The Kite repo has been moved to https://github.com/mikemaccana/kite
+
 # The modern TypeScript framework for Solana 🪁
 
 [![Tests](https://github.com/helius-labs/kite/actions/workflows/tests.yaml/badge.svg)](https://github.com/helius-labs/kite/actions/workflows/tests.yaml)
