@@ -1,4 +1,4 @@
-import { Commitment, generateKeyPairSigner, Lamports, some } from "@solana/kit";
+import { Commitment, generateKeyPairSigner, IInstruction, Lamports, some } from "@solana/kit";
 import { Address } from "@solana/kit";
 import {
   // This is badly named. It's a function that returns an object.
@@ -251,27 +251,27 @@ export const createTokenMintFactory = (
       uri: tokenMetadataExtensionData.uri,
     });
 
+    // Instruction to update token metadata extension
+    // This either updates existing fields or adds the custom additionalMetadata fields
+    const updateTokenMetadataInstruction = getUpdateTokenMetadataFieldInstruction({
+      metadata: mint.address,
+      updateAuthority: mintAuthority,
+      field: tokenMetadataField("Key", ["description"]),
+      value: "Only Possible On Solana",
+    });
+
     // Order of instructions to add to transaction
-    const baseInstructions = [
+    const instructions: IInstruction[] = [
       createAccountInstruction,
       initializeMetadataPointerInstruction,
       initializeMintInstruction,
       initializeTokenMetadataInstruction,
     ];
 
-    // Add additional metadata instructions if provided
-    const additionalInstructions = additionalMetadataMap.size > 0
-      ? [
-        getUpdateTokenMetadataFieldInstruction({
-          metadata: mint.address,
-          updateAuthority: mintAuthority,
-          field: tokenMetadataField("Key", ["description"]),
-          value: "Only Possible On Solana",
-        }),
-      ]
-      : [];
-
-    const instructions = [...baseInstructions, ...additionalInstructions];
+    if (additionalMetadataMap.size > 0) {
+      // If there are additional metadata fields, add the update instruction
+      instructions.push(updateTokenMetadataInstruction);
+    }
 
     await sendTransactionFromInstructions({
       feePayer: mintAuthority,
