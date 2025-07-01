@@ -33,6 +33,17 @@ describe("tokens", () => {
     assert.ok(mintAddress);
   });
 
+  test("We can make a new token mint w/o metadata", async () => {
+    mintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals,
+      name: "Unit test token",
+      symbol: "TEST",
+      uri: "https://example.com"
+    });
+    assert.ok(mintAddress);
+  });
+
   test("The mint authority can mintTokens", async () => {
     // Have the mint authority mint to their own account
     const mintTokensTransactionSignature = await connection.mintTokens(mintAddress, sender, 1n, sender.address);

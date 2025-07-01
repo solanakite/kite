@@ -251,23 +251,27 @@ export const createTokenMintFactory = (
       uri: tokenMetadataExtensionData.uri,
     });
 
-    // Instruction to update token metadata extension
-    // This either updates existing fields or adds the custom additionalMetadata fields
-    const updateTokenMetadataInstruction = getUpdateTokenMetadataFieldInstruction({
-      metadata: mint.address,
-      updateAuthority: mintAuthority,
-      field: tokenMetadataField("Key", ["description"]),
-      value: "Only Possible On Solana",
-    });
-
     // Order of instructions to add to transaction
-    const instructions = [
+    const baseInstructions = [
       createAccountInstruction,
       initializeMetadataPointerInstruction,
       initializeMintInstruction,
       initializeTokenMetadataInstruction,
-      updateTokenMetadataInstruction,
     ];
+
+    // Add additional metadata instructions if provided
+    const additionalInstructions = additionalMetadataMap.size > 0
+      ? [
+        getUpdateTokenMetadataFieldInstruction({
+          metadata: mint.address,
+          updateAuthority: mintAuthority,
+          field: tokenMetadataField("Key", ["description"]),
+          value: "Only Possible On Solana",
+        }),
+      ]
+      : [];
+
+    const instructions = [...baseInstructions, ...additionalInstructions];
 
     await sendTransactionFromInstructions({
       feePayer: mintAuthority,
