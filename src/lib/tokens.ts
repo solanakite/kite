@@ -1,4 +1,4 @@
-import { Commitment, generateKeyPairSigner, Lamports, some } from "@solana/kit";
+import { Commitment, generateKeyPairSigner, IInstruction, Lamports, some } from "@solana/kit";
 import { Address } from "@solana/kit";
 import {
   // This is badly named. It's a function that returns an object.
@@ -261,13 +261,17 @@ export const createTokenMintFactory = (
     });
 
     // Order of instructions to add to transaction
-    const instructions = [
+    const instructions: IInstruction[] = [
       createAccountInstruction,
       initializeMetadataPointerInstruction,
       initializeMintInstruction,
       initializeTokenMetadataInstruction,
-      updateTokenMetadataInstruction,
     ];
+
+    if (additionalMetadataMap.size > 0) {
+      // If there are additional metadata fields, add the update instruction
+      instructions.push(updateTokenMetadataInstruction);
+    }
 
     await sendTransactionFromInstructions({
       feePayer: mintAuthority,
