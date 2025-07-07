@@ -423,7 +423,7 @@ export interface Connection {
    * @param {Address} [params.wallet] - Wallet address (required if tokenAccount not provided)
    * @param {Address} [params.mint] - Token mint address (required if tokenAccount not provided)
    * @param {boolean} [params.useTokenExtensions=false] - Use Token Extensions program instead of classic Token program
-   * @returns {Promise<{amount: BigInt, decimals: number, uiAmount: number | null, uiAmountString: string}>} Balance information including amount and decimals
+   * @returns {Promise<{amount: bigint, decimals: number, uiAmount: number | null, uiAmountString: string}>} Balance information including amount and decimals
    * @throws {Error} If neither tokenAccount nor both wallet and mint are provided
    */
   getTokenAccountBalance: (params: {
@@ -432,7 +432,7 @@ export interface Connection {
     mint?: Address;
     useTokenExtensions?: boolean;
   }) => Promise<{
-    amount: BigInt;
+    amount: bigint;
     decimals: number;
     uiAmount: number | null;
     uiAmountString: string;
