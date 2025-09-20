@@ -15,10 +15,25 @@ describe("tokens", () => {
     connection = connect();
     [sender, recipient] = await connection.createWallets(2, {
       airdropAmount: lamports(1n * SOL),
+      commitment: "processed",
     });
   });
 
-  test("We can make a new token mint", async () => {
+  test("We can make a new token mint with one additional metadata field", async () => {
+    mintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals,
+      name: "Unit test token",
+      symbol: "TEST",
+      uri: "https://example.com",
+      additionalMetadata: {
+        keyOne: "valueOne",
+      },
+    });
+    assert.ok(mintAddress);
+  });
+
+  test("We can make a new token mint with two additional metadata fields", async () => {
     mintAddress = await connection.createTokenMint({
       mintAuthority: sender,
       decimals,
@@ -29,6 +44,17 @@ describe("tokens", () => {
         keyOne: "valueOne",
         keyTwo: "valueTwo",
       },
+    });
+    assert.ok(mintAddress);
+  });
+
+  test("We can make a new token mint without additional metadata", async () => {
+    mintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals,
+      name: "Unit test token",
+      symbol: "TEST",
+      uri: "https://example.com",
     });
     assert.ok(mintAddress);
   });
@@ -203,6 +229,5 @@ describe("getTokenMetadata", () => {
     assert.equal(metadata.symbol, "TEST");
     assert.equal(metadata.name, "Unit test token");
     assert.equal(metadata.uri, "https://example.com");
-    assert.equal(metadata.additionalMetadata.description, "Only Possible On Solana");
   });
 });

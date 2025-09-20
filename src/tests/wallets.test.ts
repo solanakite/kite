@@ -47,6 +47,18 @@ describe("createWallet", () => {
     await deleteFile(envFileName);
   });
 
+  test("createWallet generates a new keyPair with a SOL balance with a commitment", async () => {
+
+    const walletBefore = await connection.createWallet({
+      airdropAmount: DEFAULT_AIRDROP_AMOUNT,
+      commitment: "processed",
+    });
+
+    // Check balance
+    const balance = await connection.getLamportBalance(walletBefore.address, "processed");
+    assert.equal(balance, DEFAULT_AIRDROP_AMOUNT);
+  });
+
   describe("with prefix and suffix", () => {
     test("creates a wallet with a prefix", async () => {
       const prefix = "BE";
@@ -123,6 +135,24 @@ describe("airdropIfRequired", () => {
     });
 
     assert.ok(transferSignature);
+  });
+  test("Checking the balance after airdropIfRequired with a commitment", async () => {
+    const connection = connect();
+    const user = await generateKeyPairSigner();
+
+    const originalBalance = await connection.getLamportBalance(user.address, "processed");
+
+    assert.equal(originalBalance, 0);
+    const lamportsToAirdrop = lamports(1n * SOL);
+
+    const minimumBalance = lamports(1n * SOL);
+
+    const signature = await connection.airdropIfRequired(user.address, lamportsToAirdrop, minimumBalance, "processed");
+    assert.ok(signature, "Expected airdrop signature when balance is 0");
+
+    const newBalance = await connection.getLamportBalance(user.address, "processed");
+
+    assert.equal(newBalance, lamportsToAirdrop);
   });
 
   test("airdropIfRequired doesn't request unnecessary airdrops", async () => {

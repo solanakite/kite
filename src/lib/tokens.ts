@@ -15,6 +15,7 @@ import {
   getTransferCheckedInstruction,
   fetchMint,
   getCreateAssociatedTokenInstruction,
+  Extension,
 } from "@solana-program/token-2022";
 import { createSolanaRpcFromTransport, KeyPairSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
@@ -250,13 +251,14 @@ export const createTokenMintFactory = (
       uri: tokenMetadataExtensionData.uri,
     });
 
-    // Instruction to update token metadata extension
-    // This either updates existing fields or adds the custom additionalMetadata fields
-    const updateTokenMetadataInstruction = getUpdateTokenMetadataFieldInstruction({
-      metadata: mint.address,
-      updateAuthority: mintAuthority,
-      field: tokenMetadataField("Key", ["description"]),
-      value: "Only Possible On Solana",
+    // Create update instructions for all additional metadata fields
+    const updateInstructions = Array.from(additionalMetadataMap.entries()).map(([key, value]) => {
+      return getUpdateTokenMetadataFieldInstruction({
+        metadata: mint.address,
+        updateAuthority: mintAuthority,
+        field: tokenMetadataField("Key", [key]),
+        value: value,
+      });
     });
 
     // Order of instructions to add to transaction
@@ -265,7 +267,7 @@ export const createTokenMintFactory = (
       initializeMetadataPointerInstruction,
       initializeMintInstruction,
       initializeTokenMetadataInstruction,
-      updateTokenMetadataInstruction,
+      ...updateInstructions,
     ];
 
     await sendTransactionFromInstructions({
@@ -399,9 +401,12 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
       throw new Error(`Mint not found: ${mintAddress}`);
     }
 
-    // The fetchMint function IS working! The extensions are in mint.data.extensions.value
-    const extensions = mint.data?.extensions?.value || [];
-
+    // The fetchMint function IS working! The extensions are in mint.data.extensions
+    let extensions: Array<Extension> = [];
+    if (mint.data?.extensions.__option === "Some") {
+      extensions = mint.data?.extensions?.value || [];
+    }
+    
     // Find the metadata pointer extension
     const metadataPointerExtension = extensions.find((extension: any) => extension.__kind === "MetadataPointer");
 

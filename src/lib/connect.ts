@@ -6,13 +6,10 @@ import {
   KeyPairSigner,
   Address,
   RpcTransport,
-  createKeyPairSignerFromBytes,
-  address,
-  createKeyPairSignerFromPrivateKeyBytes,
 } from "@solana/kit";
 import { createRecentSignatureConfirmationPromiseFactory } from "@solana/transaction-confirmation";
 
-import { checkIsValidURL, encodeURL } from "./url";
+import { checkIsValidURL } from "./url";
 import { loadWalletFromEnvironment, loadWalletFromFile } from "./keypair";
 import { KNOWN_CLUSTER_NAMES, CLUSTERS, KNOWN_CLUSTER_NAMES_STRING, ClusterConfig } from "./clusters";
 
