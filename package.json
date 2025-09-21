@@ -58,6 +58,7 @@
     "@solana/assertions": "^2.0.1-canary-20241114225255",
     "@solana/errors": "^2.0.1-canary-20241114225255",
     "@solana/kit": "^2.3.0",
+    "@solana/promises": "^2.3.0",
     "@solana/transaction-confirmation": "^2.0.0",
     "dotenv": "^16.4.5"
   },
