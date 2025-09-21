@@ -5,7 +5,7 @@ import { isSolanaError, KeyPairSigner, lamports, SOLANA_ERROR__JSON_RPC__SERVER_
 import { getTransferSolInstruction } from "@solana-program/system";
 import { SOL } from "../lib/constants";
 
-describe("sendTransactionFromInstructions bug reproduction", () => {
+describe("Send Transaction From Instructions", () => {
     let sender: KeyPairSigner;
     let recipient: KeyPairSigner;
     let connection: Connection;
