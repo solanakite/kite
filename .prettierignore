@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.js.map
+
+# Logs
+*.log
+
+# Package files
+package-lock.json
+pnpm-lock.yaml
+
+# Temporary files
+temp/
+
+# Git files
+.git/
+
+# Markdown
+*.md
