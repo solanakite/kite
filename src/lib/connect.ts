@@ -72,11 +72,14 @@ export interface ClusterDetails {
     enableClientSideRetries: boolean;
     isNameKnownToSolanaExplorer: boolean;
     isExplorerDefault: boolean;
-  },
+  };
 }
 
 // Our cluster config doesn't have everything we need, so we need to get the rest of the details from the environment
-export const getClusterDetailsFromClusterConfig = (clusterName: string, clusterConfig: ClusterConfig): ClusterDetails => {
+export const getClusterDetailsFromClusterConfig = (
+  clusterName: string,
+  clusterConfig: ClusterConfig,
+): ClusterDetails => {
   let features = clusterConfig.features;
 
   if (clusterConfig.httpURL && clusterConfig.webSocketURL) {
@@ -121,7 +124,7 @@ export const getClusterDetailsFromClusterConfig = (clusterName: string, clusterC
   }
 
   throw new Error(`Cluster ${clusterName} has null URLs but no requiredRpcEnvironmentVariable specified.`);
-}
+};
 
 /**
  * Creates a connection to a Solana cluster with all helper functions pre-configured.

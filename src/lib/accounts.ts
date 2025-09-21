@@ -36,7 +36,7 @@ export const getAccountsFactoryFactory = (rpc: ReturnType<typeof createSolanaRpc
   ) => {
     return async () => {
       // See https://solana.com/docs/rpc/http/getprogramaccounts
-      const base58Decoder = getBase58Decoder()
+      const base58Decoder = getBase58Decoder();
       const getProgramAccountsResults = await rpc
         .getProgramAccounts(programAddress, {
           encoding: "jsonParsed",
