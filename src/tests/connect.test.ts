@@ -1,21 +1,15 @@
-import { before, describe, test } from "node:test";
+import { describe, test } from "node:test";
 import assert from "node:assert";
 import {
-  address as toAddress,
   generateKeyPairSigner,
   lamports,
-  KeyPairSigner,
-  Address,
   createSolanaRpcFromTransport,
   createSolanaRpcSubscriptions,
   createDefaultRpcTransport,
 } from "@solana/kit";
 
-import dotenv from "dotenv";
-import { unlink as deleteFile } from "node:fs/promises";
-import { DEFAULT_AIRDROP_AMOUNT, SOL } from "../lib/constants";
-import { connect, Connection, getWebsocketUrlFromHTTPUrl } from "../lib/connect";
-import { CLUSTERS } from "../lib/clusters";
+import { SOL } from "../lib/constants";
+import { connect, getWebsocketUrlFromHTTPUrl } from "../lib/connect";
 
 describe("connect", () => {
   test("connect returns a connection object", () => {
