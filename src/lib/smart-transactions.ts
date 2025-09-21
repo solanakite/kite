@@ -1,8 +1,7 @@
 // Based on smart-transaction.ts from https://github.com/mcintyre94/helius-smart-transactions-web3js2
 
 import {
-  IInstruction,
-  getComputeUnitEstimateForTransactionMessageFactory,
+  Instruction,
   appendTransactionMessageInstruction,
   TransactionMessage,
   isWritableRole,
@@ -21,9 +20,10 @@ import {
   identifyComputeBudgetInstruction,
   COMPUTE_BUDGET_PROGRAM_ADDRESS,
   ComputeBudgetInstruction,
+  estimateComputeUnitLimitFactory,
 } from "@solana-program/compute-budget";
 import { getAbortablePromise } from "@solana/promises";
-import { DEFAULT_TRANSACTION_RETRIES, DEFAULT_TRANSACTION_TIMEOUT } from "./constants";
+import { DEFAULT_TRANSACTION_RETRIES, DEFAULT_TRANSACTION_TIMEOUT, SECONDS } from "./constants";
 
 export const getPriorityFeeEstimate = async (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
@@ -33,7 +33,7 @@ export const getPriorityFeeEstimate = async (
 ): Promise<number> => {
   const accountKeys = [
     ...new Set([
-      ...transactionMessage.instructions.flatMap((instruction: IInstruction) =>
+      ...transactionMessage.instructions.flatMap((instruction: Instruction) =>
         (instruction.accounts ?? [])
           .filter((account) => isWritableRole(account.role))
           .map((account) => account.address),
@@ -94,7 +94,7 @@ export const getComputeUnitEstimate = async (
     ? transactionMessage
     : appendTransactionMessageInstruction(getSetComputeUnitPriceInstruction({ microLamports: 0n }), transactionMessage);
 
-  const computeUnitEstimateFn = getComputeUnitEstimateForTransactionMessageFactory({ rpc });
+  const computeUnitEstimateFn = estimateComputeUnitLimitFactory({ rpc });
   // TODO: computeUnitEstimateFn expects an explicit 'undefined' for abortSignal,
   // fix upstream
   return computeUnitEstimateFn(transactionMessageToSimulate, {
@@ -109,12 +109,18 @@ export const sendTransactionWithRetries = async (
     maximumClientSideRetries: number;
     abortSignal: AbortSignal | null;
     commitment: Commitment;
+    timeout?: number;
   } = {
     maximumClientSideRetries: DEFAULT_TRANSACTION_RETRIES,
     abortSignal: null,
     commitment: "confirmed",
+    timeout: undefined,
   },
 ) => {
+  if (options.commitment === "finalized") {
+    console.warn("Using finalized commitment for transaction with retries is not recommended. This will likely result in blockhash expiration.");
+  }
+
   let retriesLeft = options.maximumClientSideRetries;
 
   const transactionOptions = {
@@ -127,10 +133,30 @@ export const sendTransactionWithRetries = async (
     maxRetries: 0n,
   };
 
+  let timeout: number;
+  if (options.timeout) {
+    timeout = options.timeout;
+  } else {
+  switch (options.commitment) {
+    case "processed":
+      timeout = 5 * SECONDS;
+      break;
+    case "confirmed":
+      timeout = 15 * SECONDS;
+      break;
+    case "finalized":
+      timeout = 30 * SECONDS;
+      break;
+    default:
+      timeout = DEFAULT_TRANSACTION_TIMEOUT;
+      break;
+    }
+  }
+
   while (retriesLeft) {
     try {
       const txPromise = sendAndConfirmTransaction(transaction, transactionOptions);
-      await getAbortablePromise(txPromise, AbortSignal.timeout(DEFAULT_TRANSACTION_TIMEOUT));
+      await getAbortablePromise(txPromise, AbortSignal.timeout(timeout));
       break;
     } catch (error) {
       if (error instanceof DOMException && error.name === "TimeoutError") {

@@ -6,9 +6,11 @@ import {
   KeyPairSigner,
   Address,
   RpcTransport,
-  createKeyPairSignerFromBytes,
-  address,
-  createKeyPairSignerFromPrivateKeyBytes,
+  RpcSubscriptionsMainnet,
+  SolanaRpcSubscriptionsApi,
+  RpcSubscriptionsTestnet,
+  RpcSubscriptionsDevnet,
+  RpcSubscriptions,
 } from "@solana/kit";
 import { createRecentSignatureConfirmationPromiseFactory } from "@solana/transaction-confirmation";
 
@@ -72,11 +74,14 @@ export interface ClusterDetails {
     enableClientSideRetries: boolean;
     isNameKnownToSolanaExplorer: boolean;
     isExplorerDefault: boolean;
-  },
+  };
 }
 
 // Our cluster config doesn't have everything we need, so we need to get the rest of the details from the environment
-export const getClusterDetailsFromClusterConfig = (clusterName: string, clusterConfig: ClusterConfig): ClusterDetails => {
+export const getClusterDetailsFromClusterConfig = (
+  clusterName: string,
+  clusterConfig: ClusterConfig,
+): ClusterDetails => {
   let features = clusterConfig.features;
 
   if (clusterConfig.httpURL && clusterConfig.webSocketURL) {
@@ -121,7 +126,7 @@ export const getClusterDetailsFromClusterConfig = (clusterName: string, clusterC
   }
 
   throw new Error(`Cluster ${clusterName} has null URLs but no requiredRpcEnvironmentVariable specified.`);
-}
+};
 
 /**
  * Creates a connection to a Solana cluster with all helper functions pre-configured.
@@ -205,12 +210,23 @@ export const connect = (
   const typedRpcSubscriptions = rpcSubscriptions as ReturnType<typeof createSolanaRpcSubscriptions>;
 
   // Create the transaction confirmation functions based on the cluster name
-  const sendAndConfirmTransaction = clusterNameOrURL.includes("mainnet")
-    ? sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-    : clusterNameOrURL.includes("testnet")
-      ? sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-      : sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any });
-
+  let sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
+  
+  switch (true) {
+    case clusterNameOrURL.includes("mainnet"):
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsMainnet<SolanaRpcSubscriptionsApi> });
+      break;
+    case clusterNameOrURL.includes("devnet"):
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsDevnet<SolanaRpcSubscriptionsApi> });
+      break;
+    case clusterNameOrURL.includes("testnet"):
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsTestnet<SolanaRpcSubscriptionsApi> });
+      break;
+    default:
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptions<SolanaRpcSubscriptionsApi> });
+      break;
+  }
+  
   // Let's avoid data types like 'Promise' into the function name
   // we're not using Hungarian notation, this isn't common TS behavior, and it's not necessary to do so
   const getRecentSignatureConfirmation = clusterNameOrURL.includes("mainnet")
@@ -324,6 +340,7 @@ export interface Connection {
    * @param {boolean} [params.skipPreflight=true] - Skip pre-flight transaction checks to reduce latency
    * @param {number} [params.maximumClientSideRetries=0] - Number of times to retry if the transaction fails
    * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the transaction
+   * @param {number} [params.timeout=undefined] - Timeout for the transaction in milliseconds
    * @returns {Promise<string>} The transaction signature
    */
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>;
