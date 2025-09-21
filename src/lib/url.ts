@@ -1,9 +1,5 @@
-export const getCustomErrorMessage = (
-  possibleProgramErrors: Array<string>,
-  errorMessage: string,
-): string | null => {
-  const customErrorExpression =
-    /.*custom program error: 0x(?<errorNumber>[0-9abcdef]+)/;
+export const getCustomErrorMessage = (possibleProgramErrors: Array<string>, errorMessage: string): string | null => {
+  const customErrorExpression = /.*custom program error: 0x(?<errorNumber>[0-9abcdef]+)/;
 
   let match = customErrorExpression.exec(errorMessage);
   const errorNumberFound = match?.groups?.errorNumber;
@@ -15,10 +11,7 @@ export const getCustomErrorMessage = (
   return possibleProgramErrors[errorNumber] || null;
 };
 
-export const encodeURL = (
-  baseUrl: string,
-  searchParams: Record<string, string>,
-) => {
+export const encodeURL = (baseUrl: string, searchParams: Record<string, string>) => {
   // This was a little new to me, but it's the
   // recommended way to build URLs with query params
   // (and also means you don't have to do any encoding)
