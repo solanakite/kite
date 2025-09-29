@@ -15,9 +15,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: metadaoproject/setup-anchor@v3.1
         with:
-          anchor-version: '0.31.1'
-          solana-cli-version: '2.1.2' 
-          node-version: '24.1.0'
+          anchor-version: "0.31.1"
+          solana-cli-version: "2.1.2"
+          node-version: "24.1.0"
 
       - name: Run Solana validator (and background it)
         run: solana-test-validator &

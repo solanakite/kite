@@ -113,7 +113,11 @@ describe("getPDAAndBump", () => {
     const { pda: pdaBE, bump: bumpBE } = await getPDAAndBump(programAddress, ["test", addr, bigIntSeed, arr], true);
 
     // PDAs should be different due to different BigInt byte ordering
-    assert.notEqual(pdaLE.toString(), pdaBE.toString(), "Mixed seeds with different endianness should produce different PDAs");
+    assert.notEqual(
+      pdaLE.toString(),
+      pdaBE.toString(),
+      "Mixed seeds with different endianness should produce different PDAs",
+    );
 
     // Both should be valid
     assert.ok(pdaLE);
@@ -132,7 +136,11 @@ describe("getPDAAndBump", () => {
     const { pda: pdaBE, bump: bumpBE } = await getPDAAndBump(programAddress, ["test", addr, arr], true);
 
     // Should produce identical results since no BigInt seeds
-    assert.equal(pdaLE.toString(), pdaBE.toString(), "Non-BigInt seeds should produce same PDA regardless of endianness");
+    assert.equal(
+      pdaLE.toString(),
+      pdaBE.toString(),
+      "Non-BigInt seeds should produce same PDA regardless of endianness",
+    );
     assert.equal(bumpLE, bumpBE, "Non-BigInt seeds should produce same bump regardless of endianness");
   });
 });

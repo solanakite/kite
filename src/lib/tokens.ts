@@ -20,7 +20,13 @@ import {
 import { createSolanaRpcFromTransport, KeyPairSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
 import { getCreateAccountInstruction, getTransferSolInstruction } from "@solana-program/system";
-import { TOKEN_PROGRAM, TOKEN_EXTENSIONS_PROGRAM, DISCRIMINATOR_SIZE, PUBLIC_KEY_SIZE, LENGTH_FIELD_SIZE } from "./constants";
+import {
+  TOKEN_PROGRAM,
+  TOKEN_EXTENSIONS_PROGRAM,
+  DISCRIMINATOR_SIZE,
+  PUBLIC_KEY_SIZE,
+  LENGTH_FIELD_SIZE,
+} from "./constants";
 
 export const transferLamportsFactory = (
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
@@ -391,8 +397,10 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
         // Classic Token program doesn't have metadata extensions
         throw new Error(`Mint ${mintAddress} uses classic Token program which doesn't support metadata extensions`);
       } catch (classicError) {
-        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-        throw new Error(`Mint not found: ${mintAddress}. Neither Token Extensions nor classic Token program could decode this mint. Original error: ${errorMessage}`);
+        const errorMessage = error instanceof Error ? error.message : "Unknown error";
+        throw new Error(
+          `Mint not found: ${mintAddress}. Neither Token Extensions nor classic Token program could decode this mint. Original error: ${errorMessage}`,
+        );
       }
     }
 
@@ -411,7 +419,10 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
     }
 
     // Get the metadata address from the extension
-    const metadataAddress = metadataPointerExtension.metadataAddress?.__option === "Some" ? metadataPointerExtension.metadataAddress.value : null;
+    const metadataAddress =
+      metadataPointerExtension.metadataAddress?.__option === "Some"
+        ? metadataPointerExtension.metadataAddress.value
+        : null;
 
     if (!metadataAddress) {
       throw new Error(`No metadata address found in metadata pointer extension for mint: ${mintAddress}`);
@@ -457,10 +468,8 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
     }
   };
 
-
   // Helper function to parse TokenMetadata account data
   const parseTokenMetadataAccount = (data: Uint8Array) => {
-
     // Skip the 8-byte discriminator
     let offset = DISCRIMINATOR_SIZE;
 
@@ -477,7 +486,7 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
     offset += LENGTH_FIELD_SIZE;
 
     // Read name (variable length)
-    const name = new TextDecoder('utf8').decode(data.slice(offset, offset + nameLength));
+    const name = new TextDecoder("utf8").decode(data.slice(offset, offset + nameLength));
     offset += nameLength;
 
     // Read symbol length (4 bytes, little endian)
@@ -485,7 +494,7 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
     offset += LENGTH_FIELD_SIZE;
 
     // Read symbol (variable length)
-    const symbol = new TextDecoder('utf8').decode(data.slice(offset, offset + symbolLength));
+    const symbol = new TextDecoder("utf8").decode(data.slice(offset, offset + symbolLength));
     offset += symbolLength;
 
     // Read URI length (4 bytes, little endian)
@@ -493,7 +502,7 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
     offset += LENGTH_FIELD_SIZE;
 
     // Read URI (variable length)
-    const uri = new TextDecoder('utf8').decode(data.slice(offset, offset + uriLength));
+    const uri = new TextDecoder("utf8").decode(data.slice(offset, offset + uriLength));
     offset += uriLength;
 
     // Read additional metadata count (4 bytes, little endian)
@@ -508,7 +517,7 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
       offset += LENGTH_FIELD_SIZE;
 
       // Read key (variable length)
-      const key = new TextDecoder('utf8').decode(data.slice(offset, offset + keyLength));
+      const key = new TextDecoder("utf8").decode(data.slice(offset, offset + keyLength));
       offset += keyLength;
 
       // Read value length (4 bytes, little endian)
@@ -516,7 +525,7 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
       offset += LENGTH_FIELD_SIZE;
 
       // Read value (variable length)
-      const value = new TextDecoder('utf8').decode(data.slice(offset, offset + valueLength));
+      const value = new TextDecoder("utf8").decode(data.slice(offset, offset + valueLength));
       offset += valueLength;
 
       additionalMetadata[key] = value;

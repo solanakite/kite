@@ -27,12 +27,8 @@ export interface ClusterConfig {
   };
 }
 
-
 // Make an object with a map of solana cluster names to subobjects, with the subobjects containing the URL and websocket URL
-export const CLUSTERS: Record<
-  string,
-  ClusterConfig
-> = {
+export const CLUSTERS: Record<string, ClusterConfig> = {
   // Solana Labs RPCs
   // Don't add a seperate entry for 'mainnet'. Instead, we'll correct the cluster name to 'mainnet-beta'
   // in the connect function, and avoid making a duplicate entry.

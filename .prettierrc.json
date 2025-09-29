@@ -1,4 +1,4 @@
 {
-    "_": "web3.js version 2 has very long names and prettier defaults to 80 characters",
-    "printWidth": 120
+  "_": "web3.js version 2 has very long names and prettier defaults to 80 characters",
+  "printWidth": 120
 }

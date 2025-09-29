@@ -23,7 +23,9 @@
     "prepublishOnly": "npm run clean && npm run build",
     "build": "npm run clean && npx tsup src/index.ts --format esm --dts --sourcemap --out-dir dist",
     "clean": "rm -rf dist",
-    "test": "npx tsx --test --test-concurrency=true src/tests/*"
+    "test": "npx tsx --test --test-concurrency=true src/tests/*",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "keywords": [
     "solana",

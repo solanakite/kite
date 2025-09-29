@@ -211,22 +211,34 @@ export const connect = (
 
   // Create the transaction confirmation functions based on the cluster name
   let sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
-  
+
   switch (true) {
     case clusterNameOrURL.includes("mainnet"):
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsMainnet<SolanaRpcSubscriptionsApi> });
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
+        rpc,
+        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsMainnet<SolanaRpcSubscriptionsApi>,
+      });
       break;
     case clusterNameOrURL.includes("devnet"):
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsDevnet<SolanaRpcSubscriptionsApi> });
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
+        rpc,
+        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsDevnet<SolanaRpcSubscriptionsApi>,
+      });
       break;
     case clusterNameOrURL.includes("testnet"):
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsTestnet<SolanaRpcSubscriptionsApi> });
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
+        rpc,
+        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsTestnet<SolanaRpcSubscriptionsApi>,
+      });
       break;
     default:
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptions<SolanaRpcSubscriptionsApi> });
+      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
+        rpc,
+        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptions<SolanaRpcSubscriptionsApi>,
+      });
       break;
   }
-  
+
   // Let's avoid data types like 'Promise' into the function name
   // we're not using Hungarian notation, this isn't common TS behavior, and it's not necessary to do so
   const getRecentSignatureConfirmation = clusterNameOrURL.includes("mainnet")

@@ -40,7 +40,11 @@ const bigIntToSeed = (bigInt: bigint, byteLength: number, useBigEndian: boolean 
  * @param {boolean} useBigEndian - Whether to use big-endian byte order for BigInt seeds (default: false)
  * @returns {Promise<{pda: Address, bump: number}>} The derived PDA and its bump seed
  */
-export const getPDAAndBump = async (programAddress: Address, seeds: Array<String | Address | BigInt | Uint8Array>, useBigEndian: boolean = false) => {
+export const getPDAAndBump = async (
+  programAddress: Address,
+  seeds: Array<String | Address | BigInt | Uint8Array>,
+  useBigEndian: boolean = false,
+) => {
   const seedsUint8Array = seeds.map((seed) => {
     if (seed instanceof Uint8Array) {
       return seed; // Pass through unchanged

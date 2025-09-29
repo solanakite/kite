@@ -118,7 +118,9 @@ export const sendTransactionWithRetries = async (
   },
 ) => {
   if (options.commitment === "finalized") {
-    console.warn("Using finalized commitment for transaction with retries is not recommended. This will likely result in blockhash expiration.");
+    console.warn(
+      "Using finalized commitment for transaction with retries is not recommended. This will likely result in blockhash expiration.",
+    );
   }
 
   let retriesLeft = options.maximumClientSideRetries;
@@ -137,19 +139,19 @@ export const sendTransactionWithRetries = async (
   if (options.timeout) {
     timeout = options.timeout;
   } else {
-  switch (options.commitment) {
-    case "processed":
-      timeout = 5 * SECONDS;
-      break;
-    case "confirmed":
-      timeout = 15 * SECONDS;
-      break;
-    case "finalized":
-      timeout = 30 * SECONDS;
-      break;
-    default:
-      timeout = DEFAULT_TRANSACTION_TIMEOUT;
-      break;
+    switch (options.commitment) {
+      case "processed":
+        timeout = 5 * SECONDS;
+        break;
+      case "confirmed":
+        timeout = 15 * SECONDS;
+        break;
+      case "finalized":
+        timeout = 30 * SECONDS;
+        break;
+      default:
+        timeout = DEFAULT_TRANSACTION_TIMEOUT;
+        break;
     }
   }
 
