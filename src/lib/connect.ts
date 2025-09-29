@@ -6,10 +6,7 @@ import {
   KeyPairSigner,
   Address,
   RpcTransport,
-  RpcSubscriptionsMainnet,
   SolanaRpcSubscriptionsApi,
-  RpcSubscriptionsTestnet,
-  RpcSubscriptionsDevnet,
   RpcSubscriptions,
 } from "@solana/kit";
 import { createRecentSignatureConfirmationPromiseFactory } from "@solana/transaction-confirmation";
