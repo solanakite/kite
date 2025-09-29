@@ -153,7 +153,7 @@ export const connect = (
   clusterWebSocketURLOrRpcSubscriptions: string | ReturnType<typeof createSolanaRpcSubscriptions> | null = null,
 ): Connection => {
   let rpc: ReturnType<typeof createSolanaRpcFromTransport<RpcTransport>>;
-  let rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>;
+  let rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   let supportsGetPriorityFeeEstimate: boolean = false;
   let needsPriorityFees: boolean = false;
   let enableClientSideRetries: boolean = false;
@@ -206,48 +206,14 @@ export const connect = (
     }
   }
 
-  // Use rpcSubscriptions as-is, do not add ~cluster property
-  const typedRpcSubscriptions = rpcSubscriptions as ReturnType<typeof createSolanaRpcSubscriptions>;
-
   // Create the transaction confirmation functions based on the cluster name
-  let sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>;
-
-  switch (true) {
-    case clusterNameOrURL.includes("mainnet"):
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-        rpc,
-        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsMainnet<SolanaRpcSubscriptionsApi>,
-      });
-      break;
-    case clusterNameOrURL.includes("devnet"):
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-        rpc,
-        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsDevnet<SolanaRpcSubscriptionsApi>,
-      });
-      break;
-    case clusterNameOrURL.includes("testnet"):
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-        rpc,
-        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptionsTestnet<SolanaRpcSubscriptionsApi>,
-      });
-      break;
-    default:
-      sendAndConfirmTransaction = sendAndConfirmTransactionFactory({
-        rpc,
-        rpcSubscriptions: typedRpcSubscriptions as RpcSubscriptions<SolanaRpcSubscriptionsApi>,
-      });
-      break;
-  }
+  let sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
   // Let's avoid data types like 'Promise' into the function name
   // we're not using Hungarian notation, this isn't common TS behavior, and it's not necessary to do so
-  const getRecentSignatureConfirmation = clusterNameOrURL.includes("mainnet")
-    ? createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-    : clusterNameOrURL.includes("testnet")
-      ? createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-      : createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any });
+  const getRecentSignatureConfirmation = createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions });
 
-  const airdropIfRequired = airdropIfRequiredFactory(rpc, typedRpcSubscriptions);
+  const airdropIfRequired = airdropIfRequiredFactory(rpc, rpcSubscriptions);
 
   const createWallet = createWalletFactory(airdropIfRequired);
 
