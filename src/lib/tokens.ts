@@ -15,6 +15,7 @@ import {
   getTransferCheckedInstruction,
   fetchMint,
   getCreateAssociatedTokenInstruction,
+  Extension,
 } from "@solana-program/token-2022";
 import { createSolanaRpcFromTransport, KeyPairSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
@@ -399,18 +400,18 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
       throw new Error(`Mint not found: ${mintAddress}`);
     }
 
-    // The fetchMint function IS working! The extensions are in mint.data.extensions.value
-    const extensions = mint.data?.extensions?.value || [];
+    // Extract extensions from the mint account data
+    const extensions = mint.data?.extensions?.__option === "Some" ? mint.data.extensions.value : [];
 
     // Find the metadata pointer extension
-    const metadataPointerExtension = extensions.find((extension: any) => extension.__kind === "MetadataPointer");
+    const metadataPointerExtension = extensions.find((extension: Extension) => extension.__kind === "MetadataPointer");
 
     if (!metadataPointerExtension) {
       throw new Error(`No metadata pointer extension found for mint: ${mintAddress}`);
     }
 
     // Get the metadata address from the extension
-    const metadataAddress = metadataPointerExtension.metadataAddress?.value;
+    const metadataAddress = metadataPointerExtension.metadataAddress?.__option === "Some" ? metadataPointerExtension.metadataAddress.value : null;
 
     if (!metadataAddress) {
       throw new Error(`No metadata address found in metadata pointer extension for mint: ${mintAddress}`);
