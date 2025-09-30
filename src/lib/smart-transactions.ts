@@ -6,11 +6,9 @@ import {
   TransactionMessage,
   isWritableRole,
   isInstructionWithData,
-  CompilableTransactionMessage,
+  TransactionMessageWithFeePayer,
   createSolanaRpcFromTransport,
   sendAndConfirmTransactionFactory,
-  TransactionWithBlockhashLifetime,
-  FullySignedTransaction,
   Commitment,
   SOLANA_ERROR__TRANSACTION_ERROR__ALREADY_PROCESSED,
   isSolanaError,
@@ -25,6 +23,7 @@ import {
 } from "@solana-program/compute-budget";
 import { getAbortablePromise } from "@solana/promises";
 import { DEFAULT_TRANSACTION_RETRIES, DEFAULT_TRANSACTION_TIMEOUT, SECONDS } from "./constants";
+import { SendableTransaction } from "./types";
 
 export const getPriorityFeeEstimate = async (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
@@ -78,7 +77,7 @@ export const getPriorityFeeEstimate = async (
 
 export const getComputeUnitEstimate = async (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
-  transactionMessage: CompilableTransactionMessage,
+  transactionMessage: TransactionMessage & TransactionMessageWithFeePayer,
   abortSignal: AbortSignal | null = null,
 ) => {
   // add placeholder instruction for CU price if not already present
@@ -105,7 +104,7 @@ export const getComputeUnitEstimate = async (
 
 export const sendTransactionWithRetries = async (
   sendAndConfirmTransaction: ReturnType<typeof sendAndConfirmTransactionFactory>,
-  transaction: FullySignedTransaction & TransactionWithBlockhashLifetime,
+  transaction: SendableTransaction,
   options: {
     maximumClientSideRetries: number;
     abortSignal: AbortSignal | null;

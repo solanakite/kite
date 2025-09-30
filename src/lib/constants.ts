@@ -11,6 +11,10 @@ export const ASSOCIATED_TOKEN_PROGRAM = toAddress("ATokenGPvbdGVxr1b2hvZbsiqW5xW
 // All current transactions are version 0 (older one's were unversioned)
 export const SOLANA_TRANSACTION_VERSION = 0;
 
+// Solana transaction size limit in bytes
+// https://docs.solana.com/developing/programming-model/transactions#transaction-size
+export const SOLANA_MAXIMUM_TRANSACTION_SIZE = 1232;
+
 // Default values for making and loading wallets
 export const SOL = 1_000_000_000n;
 export const SECONDS = 1_000;
