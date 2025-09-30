@@ -18,12 +18,36 @@ import {
   signTransactionMessageWithSigners,
   TransactionSendingSigner,
   assertIsTransactionMessageWithBlockhashLifetime,
+  TransactionWithinSizeLimit,
   Blockhash,
 } from "@solana/kit";
 import { getComputeUnitEstimate, getPriorityFeeEstimate, sendTransactionWithRetries } from "./smart-transactions";
+import { SendableTransaction } from "./types";
 import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from "@solana-program/compute-budget";
-import { DEFAULT_TRANSACTION_RETRIES } from "./constants";
+import { DEFAULT_TRANSACTION_RETRIES, SOLANA_MAXIMUM_TRANSACTION_SIZE } from "./constants";
 import { getErrorMessageFromLogs } from "./logs";
+
+// Helper function to add transaction size property and validate size
+const addTransactionSizeProperty = (
+  signedTransaction: Awaited<ReturnType<typeof signTransactionMessageWithSigners>>
+): SendableTransaction => {
+  // Calculate actual transaction size
+  const messageSize = signedTransaction.messageBytes.length;
+  const signaturesSize = Object.keys(signedTransaction.signatures).length * 64; // Each signature is 64 bytes
+  const totalSize = messageSize + signaturesSize;
+
+  // Check if transaction is within Solana's size limit
+  const isWithinLimit = totalSize <= SOLANA_MAXIMUM_TRANSACTION_SIZE;
+
+  if (!isWithinLimit) {
+    throw new Error(`Transaction size (${totalSize} bytes) exceeds Solana's limit of ${SOLANA_MAXIMUM_TRANSACTION_SIZE} bytes`);
+  }
+
+  return {
+    ...signedTransaction,
+    "__transactionSize:@solana/kit": "withinLimit" as const,
+  } as SendableTransaction;
+};
 
 export interface ErrorWithTransaction extends Error {
   // We add this ourselves, so users can see logs etc
@@ -138,15 +162,18 @@ export const sendTransactionFromInstructionsFactory = (
     const signature = getSignatureFromTransaction(signedTransaction);
 
     try {
+      // Add transaction size property and validate size
+      const transactionWithSize = addTransactionSizeProperty(signedTransaction);
+
       if (maximumClientSideRetries) {
-        await sendTransactionWithRetries(sendAndConfirmTransaction, signedTransaction, {
+        await sendTransactionWithRetries(sendAndConfirmTransaction, transactionWithSize, {
           maximumClientSideRetries,
           abortSignal,
           commitment,
           timeout,
         });
       } else {
-        await sendAndConfirmTransaction(signedTransaction, {
+        await sendAndConfirmTransaction(transactionWithSize, {
           commitment,
           skipPreflight,
         });

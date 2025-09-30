@@ -1,9 +1,26 @@
 # Kite Changelog
 
-## In Progress
+## Upcoming release
 
-- Add improve timeout logic for smart transactions based on commitment with ability to override default timeout value
-- Adds @solana/promises to dependencies
+A big thanks to @amilz for all of these!
+
+### Bug fixes
+
+- Fix bug when when using finalized commitment, retry would attempt before the transaction had been confirmed even though the transaction has landed
+- Fix creating token mints without Metadata
+
+### Changes
+
+- Added commitment param to `airdropIfRequired()` (and `createWallet()`) for quicker airdrop processing
+- Adds @solana/promises to dependencies (thanks @amilz)
+- Update Solana Kit to V3 (thanks @amilz)
+- Improve timeout logic for smart transactions based on commitment with ability to override default timeout value (thanks @amilz)
+
+## Kite version 1.6.0
+
+### Additions
+
+- Add getTokenMetadata() function to retrieve token metadata using metadata pointer extensions. Supports both metadata stored directly in mint accounts and in separate metadata accounts. Returns name, symbol, URI, update authority, mint address, and additional metadata. Works with Token-Extension mints that have metadata pointer extension enabled.
 
 ## Kite version 1.5.5
 

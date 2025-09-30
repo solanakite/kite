@@ -9,8 +9,6 @@ import {
   TransactionMessageWithFeePayer,
   createSolanaRpcFromTransport,
   sendAndConfirmTransactionFactory,
-  TransactionWithBlockhashLifetime,
-  FullySignedTransaction,
   Commitment,
   SOLANA_ERROR__TRANSACTION_ERROR__ALREADY_PROCESSED,
   isSolanaError,
@@ -27,6 +25,7 @@ import {
 } from "@solana-program/compute-budget";
 import { getAbortablePromise } from "@solana/promises";
 import { DEFAULT_TRANSACTION_RETRIES, DEFAULT_TRANSACTION_TIMEOUT, SECONDS } from "./constants";
+import { SendableTransaction } from "./types";
 
 export const getPriorityFeeEstimate = async (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
@@ -97,10 +96,10 @@ export const getComputeUnitEstimate = async (
     ? transactionMessage
     : appendTransactionMessageInstruction(getSetComputeUnitPriceInstruction({ microLamports: 0n }), transactionMessage);
 
-  const computeUnitEstimateFn = estimateComputeUnitLimitFactory({ rpc });
-  // TODO: computeUnitEstimateFn expects an explicit 'undefined' for abortSignal,
+  const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+  // TODO: estimateComputeUnitLimit expects an explicit 'undefined' for abortSignal,
   // fix upstream
-  return computeUnitEstimateFn(transactionMessageToSimulate, {
+  return estimateComputeUnitLimit(transactionMessageToSimulate, {
     abortSignal: abortSignal ?? undefined,
   });
 };
