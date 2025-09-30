@@ -95,10 +95,10 @@ export const getComputeUnitEstimate = async (
     ? transactionMessage
     : appendTransactionMessageInstruction(getSetComputeUnitPriceInstruction({ microLamports: 0n }), transactionMessage);
 
-  const computeUnitEstimateFn = estimateComputeUnitLimitFactory({ rpc });
-  // TODO: computeUnitEstimateFn expects an explicit 'undefined' for abortSignal,
+  const estimateComputeUnitLimit = estimateComputeUnitLimitFactory({ rpc });
+  // TODO: estimateComputeUnitLimit expects an explicit 'undefined' for abortSignal,
   // fix upstream
-  return computeUnitEstimateFn(transactionMessageToSimulate, {
+  return estimateComputeUnitLimit(transactionMessageToSimulate, {
     abortSignal: abortSignal ?? undefined,
   });
 };
