@@ -151,10 +151,12 @@ export const sendTransactionFromInstructionsFactory = (
       }
     } catch (thrownObject) {
       const error = thrownObject as ErrorWithTransaction;
-
+      // getTransaction does not support processed commitment so use confirmed instead
+      // https://solana.com/docs/rpc/http/gettransaction
+      const commitmentToUse = commitment === "processed" ? "confirmed" : commitment;
       const transaction = await rpc
         .getTransaction(signature, {
-          commitment,
+          commitment: commitmentToUse,
           maxSupportedTransactionVersion: 0,
         })
         .send();
