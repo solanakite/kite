@@ -6,13 +6,10 @@ import {
   KeyPairSigner,
   Address,
   RpcTransport,
-  createKeyPairSignerFromBytes,
-  address,
-  createKeyPairSignerFromPrivateKeyBytes,
 } from "@solana/kit";
 import { createRecentSignatureConfirmationPromiseFactory } from "@solana/transaction-confirmation";
 
-import { checkIsValidURL, encodeURL } from "./url";
+import { checkIsValidURL } from "./url";
 import { loadWalletFromEnvironment, loadWalletFromFile } from "./keypair";
 import { KNOWN_CLUSTER_NAMES, CLUSTERS, KNOWN_CLUSTER_NAMES_STRING, ClusterConfig } from "./clusters";
 
@@ -450,10 +447,11 @@ export interface Connection {
   createTokenMint: (params: {
     mintAuthority: KeyPairSigner;
     decimals: number;
-    name: string;
-    symbol: string;
-    uri: string;
+    name?: string;
+    symbol?: string;
+    uri?: string;
     additionalMetadata?: Record<string, string> | Map<string, string>;
+    useTokenExtensions?: boolean;
   }) => Promise<Address>;
 
   /**
@@ -462,6 +460,7 @@ export interface Connection {
    * @param {KeyPairSigner} mintAuthority - Account authorized to mint new tokens (must sign)
    * @param {bigint} amount - Number of base units to mint (adjusted for decimals)
    * @param {Address} destination - Account to receive the new tokens
+   * @param {boolean} [useTokenExtensions=true] - Use Token Extensions program instead of classic Token program
    * @returns {Promise<string>} Transaction signature
    */
   mintTokens: (
@@ -469,6 +468,7 @@ export interface Connection {
     mintAuthority: KeyPairSigner,
     amount: bigint,
     destination: Address,
+    useTokenExtensions?: boolean,
   ) => Promise<string>;
 
   /**
@@ -480,6 +480,7 @@ export interface Connection {
    * @param {bigint} params.amount - Number of base units to transfer (adjusted for decimals)
    * @param {number} [params.maximumClientSideRetries=0] - Number of retry attempts if transfer fails
    * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the transfer
+   * @param {boolean} [params.useTokenExtensions=true] - Use Token Extensions program instead of classic Token program
    * @returns {Promise<string>} Transaction signature
    */
   transferTokens: ReturnType<typeof transferTokensFactory>;

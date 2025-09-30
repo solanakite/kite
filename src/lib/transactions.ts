@@ -1,5 +1,4 @@
 import {
-  appendTransactionMessageInstruction,
   appendTransactionMessageInstructions,
   assertIsTransactionMessageWithSingleSendingSigner,
   Commitment,
