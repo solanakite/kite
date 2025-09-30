@@ -1,7 +1,7 @@
 // Based on smart-transaction.ts from https://github.com/mcintyre94/helius-smart-transactions-web3js2
 
 import {
-  IInstruction,
+  Instruction,
   getComputeUnitEstimateForTransactionMessageFactory,
   appendTransactionMessageInstruction,
   TransactionMessage,
@@ -33,7 +33,7 @@ export const getPriorityFeeEstimate = async (
 ): Promise<number> => {
   const accountKeys = [
     ...new Set([
-      ...transactionMessage.instructions.flatMap((instruction: IInstruction) =>
+      ...transactionMessage.instructions.flatMap((instruction: Instruction) =>
         (instruction.accounts ?? [])
           .filter((account) => isWritableRole(account.role))
           .map((account) => account.address),

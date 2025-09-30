@@ -1,4 +1,4 @@
-import { Account, Commitment, generateKeyPairSigner, Lamports, some } from "@solana/kit";
+import { Account, Commitment, generateKeyPairSigner, isSolanaError, Lamports, some } from "@solana/kit";
 import { Address } from "@solana/kit";
 import {
   // This is badly named. It's a function that returns an object.
@@ -503,23 +503,17 @@ export const checkTokenAccountIsClosedFactory = (
 
 export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFromTransport>) => {
   const getTokenMetadata = async (mintAddress: Address, commitment: Commitment = "confirmed") => {
-    // First, try to get the mint account using Token-2022
     let mint: Account<Mint, string>;
     try {
+      // Backwards compatible with classic Token program - no need to recheck using fetch from @solana-program/token
       mint = await fetchMint(rpc, mintAddress, { commitment });
     } catch (error: unknown) {
-      // If Token Extensions fails, try classic Token program
-      const { fetchMint: fetchClassicMint } = await import("@solana-program/token");
-      try {
-        mint = await fetchClassicMint(rpc, mintAddress, { commitment });
-        // Classic Token program doesn't have metadata extensions
-        throw new Error(`Mint ${mintAddress} uses classic Token program which doesn't support metadata extensions`);
-      } catch (classicError) {
-        const errorMessage = error instanceof Error ? error.message : "Unknown error";
-        throw new Error(
-          `Mint not found: ${mintAddress}. Neither Token Extensions nor classic Token program could decode this mint. Original error: ${errorMessage}`,
-        );
+      if (isSolanaError(error)) {
+        throw error;
       }
+      throw new Error(
+        `Mint not found: ${mintAddress}. Neither Token Extensions nor classic Token program could decode this mint. Original error: ${error instanceof Error ? error.message : "Unknown error"}`,
+      );
     }
 
     if (!mint) {
@@ -565,15 +559,11 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
       }
 
       const updateAuthority =
-        tokenMetadata.updateAuthority.__option === "Some"
-          ? tokenMetadata.updateAuthority?.value
-          : undefined;
+        tokenMetadata.updateAuthority.__option === "Some" ? tokenMetadata.updateAuthority?.value : undefined;
 
       return {
         updateAuthority:
-          tokenMetadata.updateAuthority?.__option === "Some"
-            ? tokenMetadata.updateAuthority.value
-            : null,
+          tokenMetadata.updateAuthority?.__option === "Some" ? tokenMetadata.updateAuthority.value : null,
         mint: tokenMetadata.mint,
         name: tokenMetadata.name,
         symbol: tokenMetadata.symbol,

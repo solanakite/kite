@@ -1,13 +1,14 @@
 import {
   appendTransactionMessageInstructions,
   assertIsTransactionMessageWithSingleSendingSigner,
+  assertIsTransactionWithinSizeLimit,
   Commitment,
   createSolanaRpcFromTransport,
   createTransactionMessage,
   getBase58Decoder,
   getBase58Encoder,
   getSignatureFromTransaction,
-  IInstruction,
+  Instruction,
   KeyPairSigner,
   pipe,
   sendAndConfirmTransactionFactory,
@@ -50,7 +51,7 @@ export const sendTransactionFromInstructionsWithWalletAppFactory = (
     abortSignal = null,
   }: {
     feePayer: TransactionSendingSigner;
-    instructions: Array<IInstruction>;
+    instructions: Array<Instruction>;
     abortSignal?: AbortSignal | null;
   }) => {
     const { value: latestBlockhash } = await rpc.getLatestBlockhash().send({ abortSignal });
@@ -84,7 +85,7 @@ export const sendTransactionFromInstructionsFactory = (
     abortSignal = null,
   }: {
     feePayer: KeyPairSigner;
-    instructions: Array<IInstruction>;
+    instructions: Array<Instruction>;
     commitment?: Commitment;
     skipPreflight?: boolean;
     maximumClientSideRetries?: number;
@@ -120,6 +121,7 @@ export const sendTransactionFromInstructionsFactory = (
     }
 
     const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    assertIsTransactionWithinSizeLimit(signedTransaction);
 
     const signature = getSignatureFromTransaction(signedTransaction);
 
