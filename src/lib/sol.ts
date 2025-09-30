@@ -35,7 +35,7 @@ export const airdropIfRequiredFactory = (
     address: Address,
     airdropAmount: Lamports,
     minimumBalance: Lamports,
-    commitment: Commitment | null,
+    commitment: Commitment | null = null,
   ): Promise<string | null> => {
     // We reuse this for no minimum balance, or when the balance is less than the minimum balance
     const doAirDrop = async () => {

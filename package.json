@@ -1,6 +1,6 @@
 {
   "name": "solana-kite",
-  "version": "1.5.5",
+  "version": "1.7.0",
   "description": "The modern Solana framework for TypeScript.",
   "type": "module",
   "main": "./dist/index.js",

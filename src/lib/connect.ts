@@ -308,7 +308,7 @@ export interface Connection {
    * Builds, signs and sends a transaction containing multiple instructions.
    * @param {Object} params - Transaction parameters
    * @param {KeyPairSigner} params.feePayer - Account that will pay the transaction fees
-   * @param {Array<IInstruction>} params.instructions - List of instructions to execute in sequence
+   * @param {Array<Instruction>} params.instructions - List of instructions to execute in sequence
    * @param {Commitment} [params.commitment="confirmed"] - Confirmation level to wait for:
    *                                                      'processed' = processed by current node,
    *                                                      'confirmed' = confirmed by supermajority of the cluster,
@@ -569,7 +569,7 @@ export interface Connection {
    * Builds, signs and sends a transaction containing multiple instructions using a wallet app.
    * @param {Object} params - Transaction parameters
    * @param {TransactionSendingSigner} params.feePayer - Account that will pay the transaction fees
-   * @param {Array<IInstruction>} params.instructions - List of instructions to execute in sequence
+   * @param {Array<Instruction>} params.instructions - List of instructions to execute in sequence
    * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the transaction
    * @returns {Promise<string>} The transaction signature
    */

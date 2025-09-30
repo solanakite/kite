@@ -512,7 +512,7 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
         throw error;
       }
       throw new Error(
-        `Mint not found: ${mintAddress}. Neither Token Extensions nor classic Token program could decode this mint. Original error: ${error instanceof Error ? error.message : "Unknown error"}`,
+        `Mint not found: ${mintAddress}. Original error: ${error instanceof Error ? error.message : "Unknown error"}`,
       );
     }
 
