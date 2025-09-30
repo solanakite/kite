@@ -20,3 +20,5 @@ temp/
 
 # Markdown
 *.md
+
+package.json
