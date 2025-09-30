@@ -51,6 +51,7 @@ describe("Send Transaction From Instructions", () => {
       instructions: [transferInstruction],
       maximumClientSideRetries: 3,
       commitment: "processed",
+      timeout: 10000, // increase over default b/c CI is slow
     });
     assert.ok(signature, "Transaction should return a signature");
   });
