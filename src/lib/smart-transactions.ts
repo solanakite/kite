@@ -2,7 +2,6 @@
 
 import {
   Instruction,
-  getComputeUnitEstimateForTransactionMessageFactory,
   appendTransactionMessageInstruction,
   TransactionMessage,
   isWritableRole,
@@ -15,15 +14,17 @@ import {
   Commitment,
   SOLANA_ERROR__TRANSACTION_ERROR__ALREADY_PROCESSED,
   isSolanaError,
+  SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
 } from "@solana/kit";
 import {
   getSetComputeUnitPriceInstruction,
   identifyComputeBudgetInstruction,
   COMPUTE_BUDGET_PROGRAM_ADDRESS,
   ComputeBudgetInstruction,
+  estimateComputeUnitLimitFactory,
 } from "@solana-program/compute-budget";
 import { getAbortablePromise } from "@solana/promises";
-import { DEFAULT_TRANSACTION_RETRIES, DEFAULT_TRANSACTION_TIMEOUT } from "./constants";
+import { DEFAULT_TRANSACTION_RETRIES, DEFAULT_TRANSACTION_TIMEOUT, SECONDS } from "./constants";
 
 export const getPriorityFeeEstimate = async (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
@@ -94,7 +95,7 @@ export const getComputeUnitEstimate = async (
     ? transactionMessage
     : appendTransactionMessageInstruction(getSetComputeUnitPriceInstruction({ microLamports: 0n }), transactionMessage);
 
-  const computeUnitEstimateFn = getComputeUnitEstimateForTransactionMessageFactory({ rpc });
+  const computeUnitEstimateFn = estimateComputeUnitLimitFactory({ rpc });
   // TODO: computeUnitEstimateFn expects an explicit 'undefined' for abortSignal,
   // fix upstream
   return computeUnitEstimateFn(transactionMessageToSimulate, {
@@ -109,12 +110,20 @@ export const sendTransactionWithRetries = async (
     maximumClientSideRetries: number;
     abortSignal: AbortSignal | null;
     commitment: Commitment;
+    timeout?: number | null;
   } = {
-    maximumClientSideRetries: DEFAULT_TRANSACTION_RETRIES,
-    abortSignal: null,
-    commitment: "confirmed",
-  },
+      maximumClientSideRetries: DEFAULT_TRANSACTION_RETRIES,
+      abortSignal: null,
+      commitment: "confirmed",
+      timeout: null,
+    },
 ) => {
+  if (options.commitment === "finalized") {
+    console.warn(
+      "Using finalized commitment for transaction with retries is not recommended. This will likely result in blockhash expiration.",
+    );
+  }
+
   let retriesLeft = options.maximumClientSideRetries;
 
   const transactionOptions = {
@@ -127,10 +136,30 @@ export const sendTransactionWithRetries = async (
     maxRetries: 0n,
   };
 
+  let timeout: number;
+  if (options.timeout) {
+    timeout = options.timeout;
+  } else {
+    switch (options.commitment) {
+      case "processed":
+        timeout = 5 * SECONDS;
+        break;
+      case "confirmed":
+        timeout = 15 * SECONDS;
+        break;
+      case "finalized":
+        timeout = 30 * SECONDS;
+        break;
+      default:
+        timeout = DEFAULT_TRANSACTION_TIMEOUT;
+        break;
+    }
+  }
+
   while (retriesLeft) {
     try {
       const txPromise = sendAndConfirmTransaction(transaction, transactionOptions);
-      await getAbortablePromise(txPromise, AbortSignal.timeout(DEFAULT_TRANSACTION_TIMEOUT));
+      await getAbortablePromise(txPromise, AbortSignal.timeout(timeout));
       break;
     } catch (error) {
       if (error instanceof DOMException && error.name === "TimeoutError") {
@@ -141,6 +170,12 @@ export const sendTransactionWithRetries = async (
         // race condition where the transaction is processed between throwing the
         // `TimeoutError` and our next retry
         break;
+      } else if (isSolanaError(error, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE)) {
+        if (error.cause && isSolanaError(error.cause, SOLANA_ERROR__TRANSACTION_ERROR__ALREADY_PROCESSED)) {
+          // race condition where the transaction is processed between throwing the
+          // `TimeoutError` and our next retry and our simulation fails
+          break;
+        }
       } else {
         throw error;
       }

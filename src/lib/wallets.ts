@@ -12,7 +12,7 @@ export const createWalletFactory = (airdropIfRequired: ReturnType<typeof airdrop
       envFileName?: string | null;
       envVariableName?: string;
       airdropAmount?: Lamports | null;
-      commitment?: Commitment;
+      commitment?: Commitment | null;
     } = {},
   ): Promise<KeyPairSigner> => {
     // If the user wants to save to an env variable, we need to save to a file
@@ -26,7 +26,7 @@ export const createWalletFactory = (airdropIfRequired: ReturnType<typeof airdrop
       envFileName = null,
       envVariableName = DEFAULT_ENV_KEYPAIR_VARIABLE_NAME,
       airdropAmount = DEFAULT_AIRDROP_AMOUNT,
-      commitment = undefined,
+      commitment = null,
     } = options;
 
     let keyPairSigner: KeyPairSigner;

@@ -6,6 +6,8 @@ import {
   KeyPairSigner,
   Address,
   RpcTransport,
+  SolanaRpcSubscriptionsApi,
+  RpcSubscriptions,
 } from "@solana/kit";
 import { createRecentSignatureConfirmationPromiseFactory } from "@solana/transaction-confirmation";
 
@@ -127,7 +129,7 @@ export const getClusterDetailsFromClusterConfig = (
  * Creates a connection to a Solana cluster with all helper functions pre-configured.
  * @param {string | ReturnType<typeof createSolanaRpcFromTransport>} [clusterNameOrURLOrRpc="localnet"] - Either:
  *                 - A cluster name, from this list:
- *                   Public clusters (note these are rate limited, you should use a commercial RPCp provider for production apps)
+ *                   Public clusters (note these are rate limited, you should use a commercial RPC provider for production apps)
  *                     "mainnet", "testnet", "devnet", "localnet"
  *                   QuickNode:
  *                     "quicknode-mainnet", "quicknode-devnet", "quicknode-testnet"
@@ -139,6 +141,7 @@ export const getClusterDetailsFromClusterConfig = (
  *                 - WebSocket URL for subscriptions (required if using custom HTTP URL)
  *                 - A pre-configured RPC subscriptions client
  * @returns {Connection} Connection object with all helper functions configured
+ * @throws {Error} If using QuickNode cluster without QUICKNODE_SOLANA_MAINNET_ENDPOINT or QUICKNODE_SOLANA_DEVNET_ENDPOINT or QUICKNODE_SOLANA_TESTNET_ENDPOINT environment variable set
  * @throws {Error} If using Helius cluster without HELIUS_API_KEY environment variable set
  * @throws {Error} If using custom HTTP URL without WebSocket URL
  * @throws {Error} If cluster name is invalid
@@ -148,7 +151,7 @@ export const connect = (
   clusterWebSocketURLOrRpcSubscriptions: string | ReturnType<typeof createSolanaRpcSubscriptions> | null = null,
 ): Connection => {
   let rpc: ReturnType<typeof createSolanaRpcFromTransport<RpcTransport>>;
-  let rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>;
+  let rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
   let supportsGetPriorityFeeEstimate: boolean = false;
   let needsPriorityFees: boolean = false;
   let enableClientSideRetries: boolean = false;
@@ -201,25 +204,14 @@ export const connect = (
     }
   }
 
-  // Use rpcSubscriptions as-is, do not add ~cluster property
-  const typedRpcSubscriptions = rpcSubscriptions as ReturnType<typeof createSolanaRpcSubscriptions>;
-
   // Create the transaction confirmation functions based on the cluster name
-  const sendAndConfirmTransaction = clusterNameOrURL.includes("mainnet")
-    ? sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-    : clusterNameOrURL.includes("testnet")
-      ? sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-      : sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any });
+  let sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
 
   // Let's avoid data types like 'Promise' into the function name
   // we're not using Hungarian notation, this isn't common TS behavior, and it's not necessary to do so
-  const getRecentSignatureConfirmation = clusterNameOrURL.includes("mainnet")
-    ? createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-    : clusterNameOrURL.includes("testnet")
-      ? createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any })
-      : createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions: typedRpcSubscriptions as any });
+  const getRecentSignatureConfirmation = createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions });
 
-  const airdropIfRequired = airdropIfRequiredFactory(rpc, typedRpcSubscriptions);
+  const airdropIfRequired = airdropIfRequiredFactory(rpc, rpcSubscriptions);
 
   const createWallet = createWalletFactory(airdropIfRequired);
 
@@ -324,6 +316,7 @@ export interface Connection {
    * @param {boolean} [params.skipPreflight=true] - Skip pre-flight transaction checks to reduce latency
    * @param {number} [params.maximumClientSideRetries=0] - Number of times to retry if the transaction fails
    * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the transaction
+   * @param {number} [params.timeout=undefined] - Timeout for the transaction in milliseconds
    * @returns {Promise<string>} The transaction signature
    */
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>;

@@ -559,11 +559,10 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
       }
 
       const updateAuthority =
-        tokenMetadata.updateAuthority.__option === "Some" ? tokenMetadata.updateAuthority?.value : undefined;
+        tokenMetadata.updateAuthority?.__option === "Some" ? tokenMetadata.updateAuthority.value : null;
 
       return {
-        updateAuthority:
-          tokenMetadata.updateAuthority?.__option === "Some" ? tokenMetadata.updateAuthority.value : null,
+        updateAuthority,
         mint: tokenMetadata.mint,
         name: tokenMetadata.name,
         symbol: tokenMetadata.symbol,

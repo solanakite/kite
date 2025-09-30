@@ -17,6 +17,8 @@ import {
   signAndSendTransactionMessageWithSigners,
   signTransactionMessageWithSigners,
   TransactionSendingSigner,
+  assertIsTransactionMessageWithBlockhashLifetime,
+  Blockhash,
 } from "@solana/kit";
 import { getComputeUnitEstimate, getPriorityFeeEstimate, sendTransactionWithRetries } from "./smart-transactions";
 import { getSetComputeUnitLimitInstruction, getSetComputeUnitPriceInstruction } from "@solana-program/compute-budget";
@@ -83,6 +85,7 @@ export const sendTransactionFromInstructionsFactory = (
     skipPreflight = true,
     maximumClientSideRetries = enableClientSideRetries ? DEFAULT_TRANSACTION_RETRIES : 0,
     abortSignal = null,
+    timeout,
   }: {
     feePayer: KeyPairSigner;
     instructions: Array<Instruction>;
@@ -90,12 +93,17 @@ export const sendTransactionFromInstructionsFactory = (
     skipPreflight?: boolean;
     maximumClientSideRetries?: number;
     abortSignal?: AbortSignal | null;
+    timeout?: number;
   }) => {
-    const { value: latestBlockhash } = await rpc.getLatestBlockhash().send({ abortSignal });
+    // use a placeholder for simulation so we can wait to do the getLatestBlockhash call as the last step
+    let placeholderBlockhash = {
+      blockhash: "11111111111111111111111111111111" as Blockhash,
+      lastValidBlockHeight: 0n,
+    } as const;
 
     let transactionMessage = pipe(
       createTransactionMessage({ version: 0 }),
-      (message) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, message),
+      (message) => setTransactionMessageLifetimeUsingBlockhash(placeholderBlockhash, message),
       (message) => setTransactionMessageFeePayerSigner(feePayer, message),
       (message) => appendTransactionMessageInstructions(instructions, message),
     );
@@ -120,6 +128,10 @@ export const sendTransactionFromInstructionsFactory = (
       );
     }
 
+    const { value: latestBlockhash } = await rpc.getLatestBlockhash().send({ abortSignal });
+    transactionMessage = setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, transactionMessage);
+    assertIsTransactionMessageWithBlockhashLifetime(transactionMessage);
+
     const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
     assertIsTransactionWithinSizeLimit(signedTransaction);
 
@@ -131,6 +143,7 @@ export const sendTransactionFromInstructionsFactory = (
           maximumClientSideRetries,
           abortSignal,
           commitment,
+          timeout,
         });
       } else {
         await sendAndConfirmTransaction(signedTransaction, {
@@ -140,10 +153,12 @@ export const sendTransactionFromInstructionsFactory = (
       }
     } catch (thrownObject) {
       const error = thrownObject as ErrorWithTransaction;
-
+      // getTransaction does not support processed commitment so use confirmed instead
+      // https://solana.com/docs/rpc/http/gettransaction
+      const commitmentToUse = commitment === "processed" ? "confirmed" : commitment;
       const transaction = await rpc
         .getTransaction(signature, {
-          commitment,
+          commitment: commitmentToUse,
           maxSupportedTransactionVersion: 0,
         })
         .send();

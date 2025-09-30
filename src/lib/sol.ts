@@ -35,34 +35,32 @@ export const airdropIfRequiredFactory = (
     address: Address,
     airdropAmount: Lamports,
     minimumBalance: Lamports,
-    // We're being conservative here, using the 'finalized' commitment
-    // level because we want to ensure the SOL is always available
-    // when the function return and users try and spend it.
-    commitment: Commitment = "finalized",
+    commitment: Commitment | null,
   ): Promise<string | null> => {
-    if (airdropAmount < 0n) {
-      throw new Error(`Airdrop amount must be a positive number, not ${airdropAmount}`);
-    }
-    if (minimumBalance === 0n) {
+    // We reuse this for no minimum balance, or when the balance is less than the minimum balance
+    const doAirDrop = async () => {
       const signature = await airdrop({
-        commitment,
+        // We're being conservative here, using the 'finalized' commitment
+        // level because we want to ensure the SOL is always available
+        // when the function return and users try and spend it.
+        commitment: commitment || "finalized",
         recipientAddress: address,
         lamports: airdropAmount,
       });
       return signature;
+    };
+    if (airdropAmount < 0n) {
+      throw new Error(`Airdrop amount must be a positive number, not ${airdropAmount}`);
     }
-    const balance = await getLamportBalance(address, commitment);
+    if (minimumBalance === 0n) {
+      return doAirDrop();
+    }
+    const balance = await getLamportBalance(address, commitment || "finalized");
 
     if (balance >= minimumBalance) {
       return null;
     }
-    const signature = await airdrop({
-      commitment,
-      recipientAddress: address,
-      lamports: airdropAmount,
-    });
-
-    return signature;
+    return doAirDrop();
   };
   return airdropIfRequired;
 };

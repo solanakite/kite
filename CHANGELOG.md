@@ -1,5 +1,10 @@
 # Kite Changelog
 
+## In Progress
+
+- Add improve timeout logic for smart transactions based on commitment with ability to override default timeout value
+- Adds @solana/promises to dependencies
+
 ## Kite version 1.5.5
 
 ### Additions
