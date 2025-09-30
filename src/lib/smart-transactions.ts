@@ -14,6 +14,7 @@ import {
   Commitment,
   SOLANA_ERROR__TRANSACTION_ERROR__ALREADY_PROCESSED,
   isSolanaError,
+  SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE,
 } from "@solana/kit";
 import {
   getSetComputeUnitPriceInstruction,
@@ -169,6 +170,12 @@ export const sendTransactionWithRetries = async (
         // race condition where the transaction is processed between throwing the
         // `TimeoutError` and our next retry
         break;
+      } else if (isSolanaError(error, SOLANA_ERROR__JSON_RPC__SERVER_ERROR_SEND_TRANSACTION_PREFLIGHT_FAILURE)) {
+        if (error.cause && isSolanaError(error.cause, SOLANA_ERROR__TRANSACTION_ERROR__ALREADY_PROCESSED)) {
+          // race condition where the transaction is processed between throwing the
+          // `TimeoutError` and our next retry and our simulation fails
+          break;
+        }
       } else {
         throw error;
       }
