@@ -4,6 +4,12 @@
 
 No new featured for the next release yet, but dd them here when you make them!
 
+## Kite version 1.7.1
+
+### Bug fixes
+
+- Expose `checkIfAddressIsPublicKey()` via connection to match the documentation
+
 ## Kite version 1.7.0
 
 A big thanks to @amilz for all of these!

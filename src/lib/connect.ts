@@ -14,6 +14,7 @@ import { createRecentSignatureConfirmationPromiseFactory } from "@solana/transac
 import { checkIsValidURL } from "./url";
 import { loadWalletFromEnvironment, loadWalletFromFile } from "./keypair";
 import { KNOWN_CLUSTER_NAMES, CLUSTERS, KNOWN_CLUSTER_NAMES_STRING, ClusterConfig } from "./clusters";
+import { checkIfAddressIsPublicKey } from "./crypto";
 
 import {
   sendTransactionFromInstructionsFactory,
@@ -275,6 +276,7 @@ export const connect = (
     sendTransactionFromInstructionsWithWalletApp: sendTransactionFromInstructionsWithWalletAppFactory(rpc),
     signMessageFromWalletApp,
     checkAddressMatchesPrivateKey,
+    checkIfAddressIsPublicKey,
   };
 };
 
@@ -593,4 +595,14 @@ export interface Connection {
    * @returns {Promise<boolean>} True if the private key corresponds to the address, false otherwise
    */
   checkAddressMatchesPrivateKey: typeof checkAddressMatchesPrivateKey;
+
+  /**
+   * Checks if a given address is a valid Ed25519 public key.
+   * This verifies that the address represents a valid public key point on the Ed25519 curve,
+   * as opposed to a Program Derived Address (PDA).
+   *
+   * @param {Uint8Array | string | Address} address - The address to check, either as bytes, base58 string, or Address type
+   * @returns {Promise<boolean>} True if the address is a valid Ed25519 public key, false otherwise
+   */
+  checkIfAddressIsPublicKey: typeof checkIfAddressIsPublicKey;
 }
