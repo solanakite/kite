@@ -86,7 +86,9 @@ export const exportRawPrivateKeyBytes = async (privateKey: CryptoKey): Promise<U
   if (!privateKey.extractable) {
     throw new Error("Private key is not extractable");
   }
-  const pkcs8Bytes = await exportKey("pkcs8", privateKey);
+  // Cast to ArrayBuffer: Web Crypto API always returns ArrayBuffer, but TypeScript DOM types
+  // incorrectly include SharedArrayBuffer in the union type
+  const pkcs8Bytes = (await exportKey("pkcs8", privateKey)) as ArrayBuffer;
   const rawPrivateKeyBytes = pkcs8Bytes.slice(PKCS_8_PREFIX_LENGTH);
   return new Uint8Array(rawPrivateKeyBytes);
 };
@@ -94,7 +96,9 @@ export const exportRawPrivateKeyBytes = async (privateKey: CryptoKey): Promise<U
 export const exportRawPublicKeyBytes = async (publicKey: CryptoKey): Promise<Uint8Array> => {
   // Note we don't need to check if the public key is extractable because it is always true
   // See https://wicg.github.io/webcrypto-secure-curves/#ed25519-operations
-  const rawPublicKeyBytes = await exportKey("raw", publicKey);
+  // Cast to ArrayBuffer: Web Crypto API always returns ArrayBuffer, but TypeScript DOM types
+  // incorrectly include SharedArrayBuffer in the union type
+  const rawPublicKeyBytes = (await exportKey("raw", publicKey)) as ArrayBuffer;
   return new Uint8Array(rawPublicKeyBytes);
 };
 
