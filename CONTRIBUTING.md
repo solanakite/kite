@@ -1,3 +1,5 @@
+# Contributing
+
 ## Styleguide
 
 To kee content consistent and high-quality experience, here's a styleguide,
@@ -169,3 +171,70 @@ pnpm prettier
   because the curve is symmetrical). Ed25519 is symmetrical, and looks like a
   slightly deflated beach ball. **Do not draw a snake or some other kind or
   curve!**
+
+## Development Setup
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Build the project:
+
+```bash
+npm run build
+```
+
+Run tests:
+
+```bash
+npm run test
+```
+
+## Build & Packaging
+
+Kite ships **separate entry points** for Node and browser environments.
+This avoids issues where bundlers (like Webpack in Next.js) try to pull in Node built-ins (e.g. `fs/promises`, `path`) into client bundles.
+
+### Outputs
+
+| Target  | File                    | Notes                                                     |
+| ------- | ----------------------- | --------------------------------------------------------- |
+| Node    | `dist/index.node.js`    | Full Node features (includes Node built-ins).             |
+| Browser | `dist/index.browser.js` | Safe for client bundles (Node built-ins removed/stubbed). |
+| Types   | `dist/index.d.ts`       | Shared between both builds.                               |
+
+### How resolution works
+
+- `main` / `module` → `dist/index.node.js`
+- `exports` includes a **`browser` condition** → `dist/index.browser.js`
+- `browser` field:
+  - Maps Node built-ins like `fs/promises` and `path` → `false`
+  - Redirects `index.node.js` → `index.browser.js` in browser builds
+
+**Result:**
+
+- Node (CLI, server, SSR) resolves `index.node.js`
+- Browser bundlers (Webpack, Vite, Next.js client) resolve `index.browser.js`
+
+### Why the `browser` field?
+
+Bundlers like Webpack **statically analyze** the dependency graph. Even dynamic imports of Node built-ins can cause client-side builds to fail.
+The `browser` mapping prevents those modules from being included in browser bundles, fixing these errors.
+
+## Verifying the browser build
+
+We include a lightweight bundler check. This ensures browser consumers don’t accidentally pull in Node built-ins.
+
+```bash
+npm run test:webpack
+```
+
+- On broken packaging → fails.
+- On correct packaging → succeeds.
+
+## Opening a Pull Request
+
+- Make sure `npm run build` and `npm test` all pass.
+- Document changes clearly in your PR description.

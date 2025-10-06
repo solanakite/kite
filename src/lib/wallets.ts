@@ -3,6 +3,7 @@ import { DEFAULT_AIRDROP_AMOUNT, DEFAULT_ENV_KEYPAIR_VARIABLE_NAME } from "./con
 import { addKeyPairSignerToEnvFile, grindKeyPair, loadWalletFromEnvironment } from "./keypair";
 import dotenv from "dotenv";
 import { airdropIfRequiredFactory } from "./sol";
+import { isBrowser } from "./utilts";
 
 export const createWalletFactory = (airdropIfRequired: ReturnType<typeof airdropIfRequiredFactory>) => {
   const createWallet = async (
@@ -15,6 +16,11 @@ export const createWalletFactory = (airdropIfRequired: ReturnType<typeof airdrop
       commitment?: Commitment | null;
     } = {},
   ): Promise<KeyPairSigner> => {
+    if (isBrowser) {
+      throw new Error(
+        "createWallet is not available in browser environments. " + "It relies on Node.js built-ins like fs/promises.",
+      );
+    }
     // If the user wants to save to an env variable, we need to save to a file
     if (options.envVariableName && !options.envFileName) {
       options.envFileName = ".env";

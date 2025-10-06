@@ -3,27 +3,37 @@
   "version": "1.7.1",
   "description": "The modern Solana framework for TypeScript.",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
+  "main": "./dist/index.node.js",
+  "module": "./dist/index.node.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "import": {
         "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
+        "default": "./dist/index.node.js"
+      },
+      "browser": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.browser.js"
       }
     }
   },
   "private": false,
   "sideEffects": false,
+  "browser": {
+    "fs/promises": false,
+    "path": false,
+    "./dist/index.node.js": "./dist/index.browser.js"
+  },
   "files": [
     "dist"
   ],
   "scripts": {
     "prepublishOnly": "npm run clean && npm run build",
-    "build": "npm run clean && npx tsup src/index.ts --format esm --dts --sourcemap --out-dir dist",
+    "build": "npm run clean && npx tsup",
     "clean": "rm -rf dist",
-    "test": "npx tsx --test --test-concurrency=true src/tests/*",
+    "test": "npx tsx --test --test-concurrency=true src/tests/**/*.test.ts",
+    "test:webpack": "npx tsx --test --test-concurrency=true src/tests/webpack.smoke.test.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -67,9 +77,11 @@
   "devDependencies": {
     "@types/node": "^20.17.52",
     "prettier": "^3.0.3",
+    "ts-loader": "^9.5.4",
     "tsup": "^8.3.6",
     "tsx": "^4.19.2",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "webpack": "^5.102.0"
   },
   "publishConfig": {
     "access": "public",

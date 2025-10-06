@@ -10,3 +10,7 @@
 - [Solana Kite - Solana Kit and Anchor Example 2 - Election](https://github.com/solanakite/anchor-election-2025)
 - [Solana Kit in the browser demo](https://github.com/solanakite/solana-kit-react-app)
 - [Changelog](https://solanakite.org/docs/changelog)
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for build details, development setup, and guidelines.

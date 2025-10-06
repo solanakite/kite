@@ -13,6 +13,7 @@ import {
   KEYPAIR_LENGTH,
   KEYPAIR_PUBLIC_KEY_OFFSET,
 } from "./constants";
+import { isBrowser } from "./utilts";
 const ALLOW_EXTRACTABLE_PRIVATE_KEY_MESSAGE =
   "yes I understand the risk of extractable private keys and will delete this keypair shortly after saving it to a file";
 
@@ -109,6 +110,12 @@ export const createJSONFromKeyPairSigner = async (keyPairSigner: KeyPairSigner):
  * @returns {Promise<KeyPairSigner>} The loaded wallet
  */
 export const loadWalletFromFile = async (filepath?: string): Promise<KeyPairSigner> => {
+  if (isBrowser) {
+    throw new Error(
+      "loadWalletFromFile is not available in browser environments. " +
+        "It relies on Node.js built-ins like fs/promises.",
+    );
+  }
   // Node-specific imports
   const path = await import("node:path");
   const { readFile } = await import("node:fs/promises");
@@ -175,6 +182,12 @@ export const addKeyPairSignerToEnvFile = async (
   variableName: string,
   envFileName?: string,
 ) => {
+  if (isBrowser) {
+    throw new Error(
+      "addKeyPairSignerToEnvFile is not available in browser environments. " +
+        "It relies on Node.js built-ins like fs/promises.",
+    );
+  }
   // Node-specific imports
   const { appendFile } = await import("node:fs/promises");
   if (!envFileName) {
