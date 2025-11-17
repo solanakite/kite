@@ -4,6 +4,12 @@
 
 No new featured for the next release yet, but dd them here when you make them!
 
+## Kite version 1.7.3
+
+### Changes
+
+- Add better error messages for Airdrop request limits
+
 ## Kite version 1.7.1
 
 ### Bug fixes

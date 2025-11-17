@@ -39,16 +39,25 @@ export const airdropIfRequiredFactory = (
   ): Promise<string | null> => {
     // We reuse this for no minimum balance, or when the balance is less than the minimum balance
     const doAirDrop = async () => {
-      const signature = await airdrop({
-        // We're being conservative here, using the 'finalized' commitment
-        // level because we want to ensure the SOL is always available
-        // when the function return and users try and spend it.
-        commitment: commitment || "finalized",
-        recipientAddress: address,
-        lamports: airdropAmount,
-      });
-      return signature;
+      try {
+        const signature = await airdrop({
+          // We're being conservative here, using the 'finalized' commitment
+          // level because we want to ensure the SOL is always available
+          // when the function returns and users try and spend it.
+          commitment: commitment || "finalized",
+          recipientAddress: address,
+          lamports: airdropAmount,
+        });
+        return signature;
+      } catch (thrownObject) {
+        const error = thrownObject as Error;
+        if (error.message.includes("Too Many Requests")) {
+          throw new Error(`You have requested too many airdrops for ${address}. See https://solanakite.org/docs/sol/airdrop-if-required for help.`);
+        }
+        throw error;
+      };
     };
+
     if (airdropAmount < 0n) {
       throw new Error(`Airdrop amount must be a positive number, not ${airdropAmount}`);
     }
