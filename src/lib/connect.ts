@@ -5,7 +5,7 @@ import {
   sendAndConfirmTransactionFactory,
   KeyPairSigner,
   Address,
-  RpcTransport,
+  type RpcTransport,
   SolanaRpcSubscriptionsApi,
   RpcSubscriptions,
 } from "@solana/kit";

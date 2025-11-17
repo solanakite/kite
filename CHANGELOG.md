@@ -9,6 +9,8 @@ No new featured for the next release yet, but dd them here when you make them!
 ### Changes
 
 - Add better error messages for Airdrop request limits
+- Re-export `RpcTransport` type to fix build error where tsup reported it as unused
+- Add npm override for `glob@^12.0.0` to fix sucrase compatibility issue (see https://github.com/alangpierce/sucrase/pull/846)
 
 ## Kite version 1.7.1
 
