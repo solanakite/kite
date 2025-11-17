@@ -22,7 +22,6 @@ import { promisify } from "node:util";
 import { writeFile, unlink as deleteFile } from "node:fs/promises";
 import dotenv from "dotenv";
 import { createSignerFromKeyPair, KeyPairSigner, createKeyPairSignerFromBytes } from "@solana/kit";
-import { log } from "../lib/serializer";
 
 const exec = promisify(execNoPromises);
 const TEMP_DIR = "temp";
