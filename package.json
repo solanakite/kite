@@ -71,6 +71,10 @@
     "tsx": "^4.19.2",
     "typescript": "^5.5.4"
   },
+  "_overrides_comment": "TODO: remove this once sucrase fixes https://github.com/alangpierce/sucrase/pull/846",
+  "overrides": {
+    "glob": "^12.0.0"
+  },
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
