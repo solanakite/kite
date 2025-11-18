@@ -2,7 +2,7 @@
 
 ## Upcoming release
 
-No new featured for the next release yet, but dd them here when you make them!
+No new features for the next release yet, but add them here when you make them!
 
 ## Kite version 1.7.3
 
