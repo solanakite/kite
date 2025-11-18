@@ -3,7 +3,7 @@ import assert from "node:assert";
 import { connect } from "..";
 import { generateKeyPairSigner, lamports } from "@solana/kit";
 import { DEFAULT_AIRDROP_AMOUNT, SOL } from "../lib/constants";
-import { unlink as deleteFile } from "node:fs/promises";
+import { unlink as deleteFile, writeFile } from "node:fs/promises";
 import dotenv from "dotenv";
 
 describe("createWallet", () => {
@@ -101,6 +101,70 @@ describe("createWallet", () => {
       await assert.rejects(async () => await connection.createWallet({ suffix }), {
         message: "Suffix must contain only base58 characters.",
       });
+    });
+  });
+
+  describe("with fileName", () => {
+    test("creates a wallet and saves it to a JSON file", async () => {
+      const fileName = "temp/test-wallet-file-name.json";
+      // Clean up any existing file from previous test runs
+      try {
+        await deleteFile(fileName);
+      } catch {
+        // File doesn't exist, which is fine
+      }
+      const walletBefore = await connection.createWallet({
+        fileName,
+        airdropAmount: DEFAULT_AIRDROP_AMOUNT,
+      });
+
+      // Check balance
+      const balanceBefore = await connection.getLamportBalance(walletBefore.address);
+      assert.equal(balanceBefore, DEFAULT_AIRDROP_AMOUNT);
+
+      // Check that the file was created and can be loaded
+      const walletAfter = await connection.loadWalletFromFile(fileName);
+
+      // Check the keyPair is the same
+      assert.equal(walletBefore.address, walletAfter.address);
+
+      // Check balance has not changed
+      const balanceAfter = await connection.getLamportBalance(walletAfter.address);
+      assert.equal(balanceBefore, balanceAfter);
+
+      // Check there is a private key
+      assert.ok(walletAfter.keyPair.privateKey);
+
+      await deleteFile(fileName);
+    });
+
+    test("throws error if file already exists", async () => {
+      const fileName = "temp/test-wallet-file-exists.json";
+      // Create the file first
+      await writeFile(fileName, "[1,2,3]");
+
+      await assert.rejects(async () => await connection.createWallet({ fileName }), {
+        message: `File '${fileName}' already exists.`,
+      });
+
+      await deleteFile(fileName);
+    });
+
+    test("throws error if both fileName and envFileName are provided", async () => {
+      const fileName = "temp/test-wallet-both-files.json";
+      const envFileName = "../.env-unittest-create-wallet-both";
+
+      await assert.rejects(
+        async () =>
+          await connection.createWallet({
+            fileName,
+            envFileName,
+            airdropAmount: DEFAULT_AIRDROP_AMOUNT,
+          }),
+        {
+          message: "Cannot save to both envFileName and fileName. Please specify only one.",
+        },
+      );
     });
   });
 });

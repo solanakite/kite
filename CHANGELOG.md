@@ -4,6 +4,12 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 1.7.4
+
+### Additions
+
+- Add `fileName` option to `createWallet()` to save the private key to a JSON file using the 'array of numbers' format used by Solana CLI tools. 
+
 ## Kite version 1.7.3
 
 ### Changes
