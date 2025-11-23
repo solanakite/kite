@@ -6,6 +6,7 @@ Solana Kite is a modern TS client for Solana, with smart defaults that uses half
 
 - [Solana Kite official website](https://solanakite.org)
 - [Solana Kite documentation](https://solanakite.org/docs)
+- [Solana Kite package on npm](https://www.npmjs.com/package/solana-kite)
 - [QuickNode's Anchor and Solana Kit video (also using Kite)](https://www.youtube.com/watch?v=2T3DOMv7iR4)
 - [Solana Kite on Solana Stack Exchange](https://solana.stackexchange.com/search?q=kite)
 - [Solana Kite - Solana Kit and Anchor Example 1 - Escrow](https://github.com/solanakite/anchor-escrow-2025)
