@@ -36,7 +36,8 @@ import {
 } from "./tokens";
 import { getLogsFactory } from "./logs";
 import { getExplorerLinkFactory } from "./explorer";
-import { airdropIfRequiredFactory, getLamportBalanceFactory } from "./sol";
+import { airdropIfRequiredFactory, getLamportBalanceFactory, watchLamportBalanceFactory } from "./sol";
+import { watchTokenBalanceFactory } from "./tokens";
 import { getPDAAndBump } from "./pdas";
 import { getAccountsFactoryFactory } from "./accounts";
 import { signMessageFromWalletApp } from "./messages";
@@ -252,6 +253,8 @@ export const connect = (
     sendAndConfirmTransaction,
     sendTransactionFromInstructions,
     getLamportBalance: getLamportBalanceFactory(rpc),
+    watchLamportBalance: watchLamportBalanceFactory(rpc, rpcSubscriptions),
+    watchTokenBalance: watchTokenBalanceFactory(rpc, rpcSubscriptions),
     getExplorerLink: getExplorerLinkFactory(clusterNameOrURL),
     airdropIfRequired,
     createWallet,
@@ -333,6 +336,23 @@ export interface Connection {
    * @returns {Promise<Lamports>} The balance in lamports
    */
   getLamportBalance: ReturnType<typeof getLamportBalanceFactory>;
+
+  /**
+   * Watches for changes to a Solana account's lamport balance.
+   * @param {Address} address - The Solana address to watch
+   * @param {(error: any, balance: Lamports | null) => void} callback - Called with (error, balance) on each balance change
+   * @returns {() => void} Cleanup function to stop watching
+   */
+  watchLamportBalance: ReturnType<typeof watchLamportBalanceFactory>;
+
+  /**
+   * Watches for changes to a token balance.
+   * @param {Address} ownerAddress - The wallet address that owns the tokens
+   * @param {Address} mintAddress - The token mint address
+   * @param {(error: any, balance: object | null) => void} callback - Called with (error, balance) on each balance change
+   * @returns {Promise<() => void>} Cleanup function to stop watching
+   */
+  watchTokenBalance: ReturnType<typeof watchTokenBalanceFactory>;
 
   /**
    * Creates a URL to view any Solana entity on Solana Explorer.

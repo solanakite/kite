@@ -6,6 +6,7 @@ import {
   createSolanaRpcFromTransport,
   airdropFactory,
 } from "@solana/kit";
+import { Connection } from "./connect";
 
 export const getLamportBalanceFactory = (rpc: ReturnType<typeof createSolanaRpcFromTransport>) => {
   const getLamportBalance = async (address: string, commitment: Commitment = "finalized"): Promise<Lamports> => {
@@ -72,4 +73,105 @@ export const airdropIfRequiredFactory = (
     return doAirDrop();
   };
   return airdropIfRequired;
+};
+
+/**
+ * Creates a function to watch for changes to a Solana account's lamport balance.
+ * @param rpc - The Solana RPC client for making API calls
+ * @param rpcSubscriptions - The WebSocket client for real-time subscriptions
+ * @returns Function to watch balance changes
+ */
+export const watchLamportBalanceFactory = (
+  rpc: ReturnType<typeof createSolanaRpcFromTransport>,
+  rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>
+) => {
+  const watchLamportBalance = (
+    address: Address,
+    callback: (error: any, balance: Lamports | null) => void
+  ) => {
+    const abortController = new AbortController();
+    // Keep track of the slot of the last-published update.
+    let lastUpdateSlot = -1n;
+
+    const fetchInitialBalance = async () => {
+      try {
+        const { context: { slot }, value: lamports } = await rpc
+          .getBalance(address, { commitment: "confirmed" })
+          .send({ abortSignal: abortController.signal });
+
+        if (slot < lastUpdateSlot) {
+          // The last-published update (ie. from the subscription) is newer than this one.
+          return;
+        }
+        lastUpdateSlot = slot;
+        callback(null /* error */, lamports /* balance */);
+      } catch (error) {
+        if ((error as Error)?.name !== 'AbortError') {
+          callback(error, null);
+        }
+      }
+    };
+
+    const subscribeToUpdates = async () => {
+      try {
+        const accountInfoNotifications = await rpcSubscriptions
+          .accountNotifications(address)
+          .subscribe({ abortSignal: abortController.signal });
+
+        try {
+          for await (const {
+            context: { slot },
+            value: { lamports },
+          } of accountInfoNotifications) {
+            if (slot < lastUpdateSlot) {
+              // The last-published update (ie. from the initial fetch) is newer than this one.
+              continue;
+            }
+            lastUpdateSlot = slot;
+            callback(null /* error */, lamports /* balance */);
+          }
+        } catch (error) {
+          // Don't call callback on abort - that's expected cleanup behavior
+          if ((error as Error)?.name !== 'AbortError') {
+            callback(error, null);
+          }
+        }
+      } catch (error) {
+        // Don't call callback on abort - that's expected cleanup behavior
+        if ((error as Error)?.name !== 'AbortError') {
+          callback(error, null);
+        }
+      }
+    };
+
+    // Fetch the current balance of this account.
+    fetchInitialBalance();
+
+    // Subscribe for updates to that balance.
+    subscribeToUpdates();
+
+    // Return a cleanup callback that aborts the RPC call/subscription.
+    return () => {
+      abortController.abort();
+    };
+  };
+
+  /**
+   * Watch for changes to a Solana account's lamport balance.
+   *
+   * This function fetches the current balance and subscribes to ongoing updates,
+   * calling the provided callback whenever the balance changes.
+   *
+   * @param address - The Solana address to watch
+   * @param callback - Called with (error, balance) on each balance change
+   * @returns Cleanup function to stop watching
+   *
+   * The callback receives:
+   * - error: any error that occurred (null if successful)
+   * - balance: the new lamport balance (undefined if error)
+   *
+   * At all points in time, check that the update you received -- no matter from where -- is from a
+   * higher slot (ie. is newer) than the last one you published to the consumer.
+   */
+  return watchLamportBalance;
 };

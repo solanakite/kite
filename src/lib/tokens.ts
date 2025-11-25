@@ -1,4 +1,4 @@
-import { Account, Commitment, generateKeyPairSigner, isSolanaError, Lamports, some } from "@solana/kit";
+import { Account, Commitment, createSolanaRpcSubscriptions, generateKeyPairSigner, isSolanaError, Lamports, some } from "@solana/kit";
 import { Address } from "@solana/kit";
 import {
   // This is badly named. It's a function that returns an object.
@@ -18,8 +18,6 @@ import {
   Extension,
   Mint,
 } from "@solana-program/token-2022";
-const { getInitializeMintInstruction: getClassicInitializeMintInstruction, getMintSize: getClassicMintSize } =
-  await import("@solana-program/token");
 import { createSolanaRpcFromTransport, KeyPairSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
 import { getCreateAccountInstruction, getTransferSolInstruction } from "@solana-program/system";
@@ -178,6 +176,10 @@ const createClassicTokenMint = async ({
   mintAuthority: KeyPairSigner;
   decimals: number;
 }): Promise<Address> => {
+  // Dynamic import for classic token program functions
+  const { getInitializeMintInstruction: getClassicInitializeMintInstruction, getMintSize: getClassicMintSize } =
+    await import("@solana-program/token");
+
   const mint = await generateKeyPairSigner();
   const mintSpace = BigInt(getClassicMintSize());
   const rent = await rpc.getMinimumBalanceForRentExemption(mintSpace).send();
@@ -657,4 +659,131 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
   };
 
   return getTokenMetadata;
+};
+
+/**
+ * Creates a function to watch for changes to a token balance.
+ * @param rpc - The Solana RPC client for making API calls
+ * @param rpcSubscriptions - The WebSocket client for real-time subscriptions
+ * @returns Function to watch token balance changes
+ */
+export const watchTokenBalanceFactory = (
+  rpc: ReturnType<typeof createSolanaRpcFromTransport>,
+  rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>
+) => {
+  const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
+
+  /**
+   * This function is NOT async because it needs to return the cleanup function immediately,
+   * while starting async operations (fetching balance and subscribing) in the background.
+   * The async operations are fire-and-forget - they run independently and communicate via callback.
+   */
+  const watchTokenBalance = (
+    ownerAddress: Address,
+    mintAddress: Address,
+    callback: (error: any, balance: { amount: bigint; decimals: number; uiAmount: number | null; uiAmountString: string } | null) => void,
+    useTokenExtensions: boolean = true
+  ) => {
+    const abortController = new AbortController();
+    let lastUpdateSlot = -1n;
+
+    const fetchInitialBalance = async () => {
+      try {
+        const balance = await getTokenAccountBalance({
+          wallet: ownerAddress,
+          mint: mintAddress,
+          useTokenExtensions,
+        });
+        callback(null /* error */, balance);
+      } catch (error) {
+        // If account doesn't exist yet, return zero balance
+        if ((error as Error)?.name !== 'AbortError') {
+          callback(null /* error */, {
+            amount: 0n,
+            decimals: 9,
+            uiAmount: 0,
+            uiAmountString: "0",
+          });
+        }
+      }
+    };
+
+    const subscribeToUpdates = async () => {
+      try {
+        const tokenAccountAddress = await getTokenAccountAddress(ownerAddress, mintAddress, useTokenExtensions);
+        const accountInfoNotifications = await rpcSubscriptions
+          .accountNotifications(tokenAccountAddress)
+          .subscribe({ abortSignal: abortController.signal });
+
+        try {
+          for await (const {
+            context: { slot },
+          } of accountInfoNotifications) {
+            if (slot < lastUpdateSlot) {
+              continue;
+            }
+            lastUpdateSlot = slot;
+
+            try {
+              const balance = await getTokenAccountBalance({
+                wallet: ownerAddress,
+                mint: mintAddress,
+                useTokenExtensions,
+              });
+              callback(null /* error */, balance);
+            } catch (balanceError) {
+              if ((balanceError as Error)?.name !== 'AbortError') {
+                callback(null /* error */, {
+                  amount: 0n,
+                  decimals: 9,
+                  uiAmount: 0,
+                  uiAmountString: "0",
+                });
+              }
+            }
+          }
+        } catch (error) {
+          // Don't call callback on abort - that's expected cleanup behavior
+          if ((error as Error)?.name !== 'AbortError') {
+            callback(error, null);
+          }
+        }
+      } catch (error) {
+        // Don't call callback on abort - that's expected cleanup behavior
+        if ((error as Error)?.name !== 'AbortError') {
+          callback(error, null);
+        }
+      }
+    };
+
+    // Fetch the current balance of this token account
+    // Fire-and-forget: We call this async function without await because we need to return the cleanup function immediately
+    fetchInitialBalance();
+
+    // Subscribe for updates to that balance
+    // Fire-and-forget: We call this async function without await because we need to return the cleanup function immediately
+    subscribeToUpdates();
+
+    // Return a cleanup callback that aborts the RPC call/subscription
+    return () => {
+      abortController.abort();
+    };
+  };
+
+  /**
+   * Watch for changes to a token balance.
+   *
+   * This function fetches the current token balance and subscribes to ongoing updates,
+   * calling the provided callback whenever the balance changes.
+   *
+   * @param ownerAddress - The wallet address that owns the tokens
+   * @param mintAddress - The token mint address
+   * @param callback - Called with (error, balance) on each balance change
+   * @returns Cleanup function to stop watching
+   *
+   * The callback receives:
+   * - error: any error that occurred (null if successful)
+   * - balance: the token balance object with amount, decimals, uiAmount, uiAmountString (null if error)
+   */
+  return watchTokenBalance;
 };

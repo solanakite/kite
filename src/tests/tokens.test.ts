@@ -383,3 +383,159 @@ describe("classic token program", () => {
     await assert.rejects(() => connection.getTokenMetadata(mintAddress));
   });
 });
+
+describe("watchTokenBalance", () => {
+  test("watchTokenBalance calls callback with initial balance", async () => {
+    const connection = connect();
+    const wallet = await connection.createWallet();
+
+    const tokenMint = await connection.createTokenMint({
+      mintAuthority: wallet,
+      decimals: 9,
+      name: "Test Token",
+      symbol: "TEST",
+      uri: "https://example.com",
+    });
+
+    // Mint some tokens to the wallet
+    await connection.mintTokens(tokenMint, wallet, 1000n, wallet.address);
+
+    // Now call watchTokenBalance and check we get the correct balance
+    await new Promise<void>((resolve) => {
+      const cleanup = connection.watchTokenBalance(wallet.address, tokenMint, (error, balance) => {
+        if (error) {
+          cleanup();
+          throw error;
+        }
+
+        // Should get the initial balance
+        assert.equal(balance?.amount, 1000n);
+        assert.equal(balance?.decimals, 9);
+        cleanup();
+        resolve();
+      });
+    });
+  });
+
+  test("watchTokenBalance calls callback when balance changes", async () => {
+    const connection = connect();
+    const [sender, recipient] = await connection.createWallets(2);
+    const tokenMint = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals: 9,
+      name: "Test Token",
+      symbol: "TEST",
+      uri: "https://example.com",
+    });
+
+    // Mint tokens to sender
+    await connection.mintTokens(tokenMint, sender, 2000n, sender.address);
+
+    let callCount = 0;
+    let initialBalance: bigint | null = null;
+    let updatedBalance: bigint | null = null;
+
+    await new Promise<void>((resolve) => {
+      const cleanup = connection.watchTokenBalance(recipient.address, tokenMint, (error, balance) => {
+        if (error) {
+          cleanup();
+          throw error;
+        }
+
+        callCount++;
+
+        if (callCount === 1) {
+          // Initial balance should be 0
+          initialBalance = balance?.amount || 0n;
+          assert.equal(balance?.amount, 0n);
+
+          // Now transfer some tokens to change the balance
+          void connection.transferTokens({
+            sender,
+            destination: recipient.address,
+            mintAddress: tokenMint,
+            amount: 500n,
+          });
+        } else if (callCount === 2) {
+          // Balance should have increased
+          updatedBalance = balance?.amount || 0n;
+          assert.equal(balance?.amount, 500n);
+          cleanup();
+          resolve();
+        }
+      });
+    });
+
+    assert.equal(callCount, 2);
+    assert.equal(initialBalance, 0n);
+    assert.equal(updatedBalance, 500n);
+  });
+
+  test("watchTokenBalance cleanup prevents further callbacks", async () => {
+    const connection = connect();
+    const wallet = await connection.createWallet();
+
+    const tokenMint = await connection.createTokenMint({
+      mintAuthority: wallet,
+      decimals: 9,
+      name: "Test Token",
+      symbol: "TEST",
+      uri: "https://example.com",
+    });
+
+    // Mint some tokens
+    await connection.mintTokens(tokenMint, wallet, 1000n, wallet.address);
+
+    let callCount = 0;
+
+    await new Promise<void>((resolve) => {
+      const cleanup = connection.watchTokenBalance(wallet.address, tokenMint, (error, balance) => {
+        if (error) {
+          cleanup();
+          throw error;
+        }
+
+        callCount++;
+
+        if (callCount === 1) {
+          // Got initial balance, now cleanup immediately
+          cleanup();
+          // Wait a bit to ensure no more callbacks are called
+          setTimeout(() => {
+            assert.equal(callCount, 1); // Should still be 1
+            resolve();
+          }, 100);
+        }
+      });
+    });
+  });
+
+  test("watchTokenBalance handles errors appropriately", async () => {
+    const connection = connect();
+
+    // Use an invalid mint address
+    const invalidMint = "invalid" as Address;
+
+    await new Promise<void>((resolve, reject) => {
+      // Track if callback has been called to prevent race condition where
+      // callback might be invoked multiple times (initial fetch + subscription)
+      let called = false;
+      const cleanup = connection.watchTokenBalance("11111111111111111111111111111112" as Address, invalidMint, (error, balance) => {
+        if (called) return; // Ignore subsequent callbacks
+        called = true;
+
+        if (error) {
+          // Should get an error for invalid mint
+          assert(error instanceof Error);
+          assert.equal(balance, null);
+          cleanup();
+          resolve();
+        } else {
+          // Should not get here
+          cleanup();
+          reject(new Error("Expected an error for invalid mint"));
+        }
+      });
+    });
+  });
+});

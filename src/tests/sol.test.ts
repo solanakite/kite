@@ -84,7 +84,7 @@ describe("airdropIfRequired error handling", () => {
       // Test that the error is thrown with the expected message
       await assert.rejects(
         async () => {
-          await airdropIfRequired(testAddress, lamports(1n * SOL), 0n);
+          await airdropIfRequired(testAddress, lamports(1n * SOL), lamports(0n));
         },
         (error: Error) => {
           assert.equal(
@@ -102,5 +102,124 @@ describe("airdropIfRequired error handling", () => {
         });
       });
     }
+  });
+});
+
+describe("watchLamportBalance", () => {
+  test("watchLamportBalance calls callback with initial balance", async () => {
+    const keypairSigner = await generateKeyPairSigner();
+    const connection = connect();
+
+    // Airdrop some SOL to have a non-zero balance
+    await connection.airdropIfRequired(keypairSigner.address, lamports(1n * SOL), lamports(1n * SOL));
+
+    await new Promise<void>((resolve) => {
+      const unsubscribe = connection.watchLamportBalance(keypairSigner.address, (error, balance) => {
+        if (error) {
+          throw error;
+        }
+
+        // Should get the initial balance
+        assert.equal(balance, lamports(1n * SOL));
+        unsubscribe();
+        resolve();
+      });
+    });
+  });
+
+  test("watchLamportBalance calls callback when balance changes", async () => {
+    const connection = connect();
+    const [sender, recipient] = await connection.createWallets(2, {
+      airdropAmount: lamports(1n * SOL),
+    });
+
+    let callCount = 0;
+    let initialBalance: bigint | null = null;
+    let updatedBalance: bigint | null = null;
+
+    await new Promise<void>((resolve) => {
+      const unsubscribe = connection.watchLamportBalance(recipient.address, (error, balance) => {
+        if (error) {
+          throw error;
+        }
+
+        callCount++;
+
+        if (callCount === 1) {
+          // Initial balance should be 1 SOL
+          initialBalance = balance;
+          assert.equal(balance, lamports(1n * SOL));
+
+          // Now transfer some SOL to change the balance
+          connection.transferLamports({
+            source: sender,
+            destination: recipient.address,
+            amount: lamports(500_000n),
+          }).catch(() => { }); // Ignore transfer errors for this test
+        } else if (callCount === 2) {
+          // Balance should have increased
+          updatedBalance = balance;
+          assert.equal(balance, lamports(1n * SOL + 500_000n));
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+
+    assert.equal(callCount, 2);
+    assert.equal(initialBalance, lamports(1n * SOL));
+    assert.equal(updatedBalance, lamports(1n * SOL + 500_000n));
+  });
+
+  test("watchLamportBalance cleanup prevents further callbacks", async () => {
+    const keypairSigner = await generateKeyPairSigner();
+    const connection = connect();
+
+    await connection.airdropIfRequired(keypairSigner.address, lamports(1n * SOL), lamports(1n * SOL));
+
+    let callCount = 0;
+
+    await new Promise<void>((resolve) => {
+      const unsubscribe = connection.watchLamportBalance(keypairSigner.address, (error, balance) => {
+        if (error) {
+          throw error;
+        }
+
+        callCount++;
+
+        if (callCount === 1) {
+          // Got initial balance, now unsubscribe
+          unsubscribe();
+
+          // Wait a bit and check that no more callbacks are called
+          setTimeout(() => {
+            assert.equal(callCount, 1); // Should still be 1
+            resolve();
+          }, 100);
+        }
+      });
+    });
+  });
+
+  test("watchLamportBalance handles errors appropriately", async () => {
+    const connection = connect();
+
+    // Use an invalid address to trigger an error
+    const invalidAddress = "invalid" as Address;
+
+    await new Promise<void>((resolve) => {
+      const unsubscribe = connection.watchLamportBalance(invalidAddress, (error, balance) => {
+        if (error) {
+          // Should get an error for invalid address
+          assert(error instanceof Error);
+          assert.equal(balance, null);
+          unsubscribe();
+          resolve();
+        } else {
+          // Should not get here
+          throw new Error("Expected an error for invalid address");
+        }
+      });
+    });
   });
 });
