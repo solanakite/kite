@@ -1,9 +1,15 @@
 - You are an expert TypeScript developer.
 - Code has unit tests. Unit tests use 'describe' and 'test' from "node:test" and 'assert' from "node:assert". Unit tests do not use 'it' or 'expect'.
-- Prefer giving variables and functions meaningful names rather than adding comments explaining what a smaller name means. Do not abbreviate variable names. Instead use full names so they can be searched for easily. `err` for example is not a valid variable name since it is an abbreviation. `error` is a valid name as it is a full word.
+- Prefer giving variables and functions meaningful names rather than adding comments explaining what a smaller name means. Do not abbreviate variable names. Instead use full names so they can be searched for easily. `err` for example is not a valid variable name since it is an abbreviation. `error` is a valid name as it is a full word. `data` is not a meaningful name. Data about what? 
 - Don't copy paste logic. Instead create named functions and use them.
 - Prefer using arrow functions over function declarations.
 - Prefer using const over let.
-- Use async/await. Do not use callbacks or `.then()`.
+- Use async/await. Do not use callbacks or `.then()`. Avoid using IIFEs. If for some reason you have to, add a comment why.
 - Use try/catch, never use `.catch()`
-- Assume thrown objects are Error objects. We will not throw non-Error objects.
+- Assume thrown objects are Error objects. We will not throw non-Error objects. 
+- If you use the ✅ emoji, you must always use the ❌ emoji for remaining tasks, unelss there are 0 remaining tasks. Nothing is complete until there are 0 remaining task,. Code that is syntax highlighted as broken (red underline) is a remaining task.
+- Your changes are never complete until the tests pass. You can run a subset of tests, for speed, with a command like: 
+
+```bash
+npx tsx --test-name-pattern ".*watchTokenBalance.*" src/tests/tokens.test.ts
+```
