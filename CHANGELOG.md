@@ -4,6 +4,13 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 1.8.0
+
+### Additions
+
+- Add `watchLamportBalance()` function to watch for real-time changes to SOL balances using WebSocket subscriptions. Returns a cleanup function to stop watching.
+- Add `watchTokenBalance()` function to watch for real-time changes to token balances using WebSocket subscriptions. Supports both Token Extensions and Classic Tokens. Returns a cleanup function to stop watching.
+
 ## Kite version 1.7.4
 
 ### Additions
