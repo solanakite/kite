@@ -134,19 +134,24 @@ export const sendTransactionFromInstructionsFactory = (
 
     const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
     assertIsTransactionWithinSizeLimit(signedTransaction);
+    // After signing a transaction with blockhash lifetime, it maintains that lifetime
+    // Type assertion needed because the type system doesn't narrow this automatically
+    const blockhashSignedTransaction = signedTransaction as typeof signedTransaction & {
+      lifetimeConstraint: { blockhash: Blockhash; lastValidBlockHeight: bigint };
+    };
 
-    const signature = getSignatureFromTransaction(signedTransaction);
+    const signature = getSignatureFromTransaction(blockhashSignedTransaction);
 
     try {
       if (maximumClientSideRetries) {
-        await sendTransactionWithRetries(sendAndConfirmTransaction, signedTransaction, {
+        await sendTransactionWithRetries(sendAndConfirmTransaction, blockhashSignedTransaction, {
           maximumClientSideRetries,
           abortSignal,
           commitment,
           timeout,
         });
       } else {
-        await sendAndConfirmTransaction(signedTransaction, {
+        await sendAndConfirmTransaction(blockhashSignedTransaction, {
           commitment,
           skipPreflight,
         });
