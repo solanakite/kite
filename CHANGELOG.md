@@ -4,6 +4,23 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 2.0.0
+
+### Breaking Changes
+
+- **Upgraded @solana/kit from 3.0.3 to 5.0.0** - This is a major version upgrade of the underlying Solana Web3.js 2.0 library
+- Upgraded all @solana-program packages to their latest versions:
+  - `@solana-program/compute-budget`: 0.9.0 → 0.11.0
+  - `@solana-program/memo`: 0.8.0 → 0.10.0
+  - `@solana-program/system`: 0.8.0 → 0.10.0
+  - `@solana-program/token`: 0.6.0 → 0.9.0
+  - `@solana-program/token-2022`: 0.5.0 → 0.6.1
+- Upgraded `@solana/transaction-confirmation` from 3.0.3 to 5.0.0
+
+### Bug Fixes
+
+- Fixed test environment variable cleanup to prevent test interference in connect tests
+
 ## Kite version 1.8.0
 
 ### Additions
