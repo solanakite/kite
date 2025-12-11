@@ -43,6 +43,7 @@ describe("connect", () => {
 
   test("connect returns a connection object with the correct URLs when a cluster name is provided", () => {
     const connection = connect("mainnet-beta");
+    assert.ok(connection);
   });
 
   test("connect throws an error when an invalid cluster name is provided", () => {
