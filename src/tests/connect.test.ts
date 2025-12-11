@@ -18,7 +18,14 @@ describe("connect", () => {
   });
 
   test("connect throws an error connecting to a cluster that requires an API key when the API key is not set", () => {
+    // Make sure HELIUS_API_KEY is not set for this test
+    const originalKey = process.env.HELIUS_API_KEY;
+    delete process.env.HELIUS_API_KEY;
     assert.throws(() => connect("helius-mainnet"), Error);
+    // Restore original value if it existed
+    if (originalKey) {
+      process.env.HELIUS_API_KEY = originalKey;
+    }
   });
 
   test("connect returns a connection object with the correct URLs when two custom URLs are provided", () => {
@@ -30,6 +37,8 @@ describe("connect", () => {
     process.env.HELIUS_API_KEY = "fake-api-key";
     const connection = connect("helius-mainnet");
     assert.ok(connection);
+    // Clean up after this test
+    delete process.env.HELIUS_API_KEY;
   });
 
   test("connect returns a connection object with the correct URLs when a cluster name is provided", () => {
