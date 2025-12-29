@@ -59,10 +59,11 @@
     "@solana-program/token-2022": "^0.6.1",
     "@solana/assertions": "^3.0.3",
     "@solana/errors": "^3.0.3",
-    "@solana/kit": "^5.0.0",
+    "@solana/kit": "^5.1.0",
     "@solana/promises": "^3.0.3",
     "@solana/transaction-confirmation": "^5.0.0",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "ws": "^8.18.3"
   },
   "devDependencies": {
     "@types/node": "^20.17.52",
