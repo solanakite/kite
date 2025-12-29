@@ -1,14 +1,21 @@
-# Kite: the modern TypeScript framework for Solana 🪁
+# Kite: the modern TypeScript client for Solana Kit 🪁
 
-Solana Kite is a modern TS client for Solana, with smart defaults that uses half the code of Gill and even less than Solana Kit. It's created by the author of the most popular high level TS client for Solana web3.js. It uses the same types as Solana Kit, so you're never locked in.
+The simplicity of web3.js on top of Solana Kit.
 
 [![Tests](https://github.com/solanakite/kite/actions/workflows/tests.yaml/badge.svg)](https://github.com/solanakite/kite/actions/workflows/tests.yaml)
 
-- [Solana Kite official website](https://solanakite.org)
-- [Solana Kite documentation](https://solanakite.org/docs)
-- [Solana Kite package on npm](https://www.npmjs.com/package/solana-kite)
-- [Solana Kite on GitHub](https://github.com/solanakite/kite)
-- [Example Projects](https://solanakite.org/docs/examples)
-- [Videos](https://solanakite.org/docs/videos)
-- [Solana Kite on Solana Stack Exchange](https://solana.stackexchange.com/search?q=kite)
+## Features
+
+- **Write half the code of alternatives** - Clean, intuitive APIs mean less boilerplate and fewer bugs in your production apps
+- **Ship faster with single-line operations** - Create funded wallets, send tokens, create tokens, and make arbitrary transactions without the boilerplate of lower-level clients
+- **5 example projects and 3 video tutorials and hand written editor docs** show you how to build production-ready Solana apps
+- **Never get locked in** - Built on Solana Kit with identical types, so you can drop down to `connection.rpc` whenever you need full control
+
+- [Official website](https://solanakite.org)
+- [Documentation](https://solanakite.org/docs)
+- [npm](https://www.npmjs.com/package/solana-kite)
+- [GitHub](https://github.com/solanakite/kite)
+- [5 Example Projects](https://solanakite.org/docs/examples)
+- [3 Videos](https://solanakite.org/docs/videos)
+- [Kite on Solana Stack Exchange](https://solana.stackexchange.com/search?q=kite)
 - [Changelog](https://solanakite.org/docs/changelog)
