@@ -4,6 +4,12 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 2.1.0
+
+### Changes
+
+- **Upgraded @solana/kit from 5.0.0 to 5.1.0** - Updates to the latest stable release of the underlying Solana Web3.js 2.0 library
+
 ## Kite version 2.0.0
 
 ### Breaking Changes
@@ -32,7 +38,7 @@ No new features for the next release yet, but add them here when you make them!
 
 ### Additions
 
-- Add `fileName` option to `createWallet()` to save the private key to a JSON file using the 'array of numbers' format used by Solana CLI tools. 
+- Add `fileName` option to `createWallet()` to save the private key to a JSON file using the 'array of numbers' format used by Solana CLI tools.
 
 ## Kite version 1.7.3
 
