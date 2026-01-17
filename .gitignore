@@ -8,3 +8,4 @@ src/temp
 .DS_Store
 TODO.md
 temp
+.npm-cache

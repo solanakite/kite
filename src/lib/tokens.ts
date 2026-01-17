@@ -18,7 +18,7 @@ import {
   Extension,
   Mint,
 } from "@solana-program/token-2022";
-import { createSolanaRpcFromTransport, KeyPairSigner } from "@solana/kit";
+import { createSolanaRpcFromTransport, KeyPairSigner, TransactionSendingSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
 import { getCreateAccountInstruction, getTransferSolInstruction } from "@solana-program/system";
 import {
@@ -40,7 +40,7 @@ export const transferLamportsFactory = (
     maximumClientSideRetries = 0,
     abortSignal = null,
   }: {
-    source: KeyPairSigner;
+    source: TransactionSendingSigner;
     destination: Address;
     amount: Lamports;
     skipPreflight?: boolean;
@@ -80,7 +80,7 @@ export const transferTokensFactory = (
     abortSignal = null,
     useTokenExtensions = true,
   }: {
-    sender: KeyPairSigner;
+    sender: TransactionSendingSigner;
     destination: Address;
     mintAddress: Address;
     amount: bigint;
@@ -173,7 +173,7 @@ const createClassicTokenMint = async ({
 }: {
   rpc: ReturnType<typeof createSolanaRpcFromTransport>;
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>;
-  mintAuthority: KeyPairSigner;
+  mintAuthority: TransactionSendingSigner;
   decimals: number;
 }): Promise<Address> => {
   // Dynamic import for classic token program functions
@@ -226,7 +226,7 @@ const createToken22Mint = async ({
 }: {
   rpc: ReturnType<typeof createSolanaRpcFromTransport>;
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>;
-  mintAuthority: KeyPairSigner;
+  mintAuthority: TransactionSendingSigner;
   decimals: number;
   name: string;
   symbol: string;
@@ -346,7 +346,7 @@ export const createTokenMintFactory = (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
 ): ((params: {
-  mintAuthority: KeyPairSigner;
+  mintAuthority: TransactionSendingSigner;
   decimals: number;
   name?: string;
   symbol?: string;
@@ -363,7 +363,7 @@ export const createTokenMintFactory = (
     additionalMetadata = {},
     useTokenExtensions = true,
   }: {
-    mintAuthority: KeyPairSigner;
+    mintAuthority: TransactionSendingSigner;
     decimals: number;
     name?: string;
     symbol?: string;
@@ -404,7 +404,7 @@ export const mintTokensFactory = (
 ) => {
   const mintTokens = async (
     mintAddress: Address,
-    mintAuthority: KeyPairSigner,
+    mintAuthority: TransactionSendingSigner,
     amount: bigint,
     destination: Address,
     useTokenExtensions = true,

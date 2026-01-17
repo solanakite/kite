@@ -4,6 +4,14 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 2.2.0
+
+### Changes
+
+- Updated `sendTransactionFromInstructionsWithWalletApp()` to accept `TransactionModifyingSigner` instead of `TransactionSigner` to properly support browser wallets via Wallet Standard
+- Updated all token transfer functions (`transferLamports()`, `transferTokens()`, `createTokenMint()`, `mintTokens()`) to accept `TransactionSendingSigner` instead of just `KeyPairSigner`, enabling broader signer compatibility
+- Updated JSDoc comments and type definitions throughout to reflect new signer types
+
 ## Kite version 2.1.0
 
 ### Changes

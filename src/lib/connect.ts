@@ -4,6 +4,7 @@ import {
   createSolanaRpcSubscriptions,
   sendAndConfirmTransactionFactory,
   KeyPairSigner,
+  TransactionSendingSigner,
   Address,
   type RpcTransport,
   SolanaRpcSubscriptionsApi,
@@ -312,7 +313,7 @@ export interface Connection {
   /**
    * Builds, signs and sends a transaction containing multiple instructions.
    * @param {Object} params - Transaction parameters
-   * @param {KeyPairSigner} params.feePayer - Account that will pay the transaction fees
+   * @param {TransactionSendingSigner} params.feePayer - Account that will pay the transaction fees
    * @param {Array<Instruction>} params.instructions - List of instructions to execute in sequence
    * @param {Commitment} [params.commitment="confirmed"] - Confirmation level to wait for:
    *                                                      'processed' = processed by current node,
@@ -438,7 +439,7 @@ export interface Connection {
   /**
    * Transfers SOL from one account to another.
    * @param {Object} params - Transfer details
-   * @param {KeyPairSigner} params.source - Account sending the SOL (must sign)
+   * @param {TransactionSendingSigner} params.source - Account sending the SOL (must sign)
    * @param {Address} params.destination - Account receiving the SOL
    * @param {Lamports} params.amount - Amount of SOL to send (in lamports)
    * @param {boolean} [params.skipPreflight=true] - Skip pre-flight checks to reduce latency
@@ -451,7 +452,7 @@ export interface Connection {
   /**
    * Creates a new SPL token with metadata and minting controls.
    * @param {Object} params - Token configuration
-   * @param {KeyPairSigner} params.mintAuthority - Account that will have permission to mint tokens
+   * @param {TransactionSendingSigner} params.mintAuthority - Account that will have permission to mint tokens
    * @param {number} params.decimals - Number of decimal places (e.g. 9 decimals means 1 token = 1,000,000,000 base units)
    * @param {string} params.name - Display name of the token
    * @param {string} params.symbol - Short ticker symbol (e.g. "USDC")
@@ -460,7 +461,7 @@ export interface Connection {
    * @returns {Promise<Address>} Address of the new token mint
    */
   createTokenMint: (params: {
-    mintAuthority: KeyPairSigner;
+    mintAuthority: TransactionSendingSigner;
     decimals: number;
     name?: string;
     symbol?: string;
@@ -472,7 +473,7 @@ export interface Connection {
   /**
    * Creates new tokens from a token mint.
    * @param {Address} mintAddress - The token mint to create tokens from
-   * @param {KeyPairSigner} mintAuthority - Account authorized to mint new tokens (must sign)
+   * @param {TransactionSendingSigner} mintAuthority - Account authorized to mint new tokens (must sign)
    * @param {bigint} amount - Number of base units to mint (adjusted for decimals)
    * @param {Address} destination - Account to receive the new tokens
    * @param {boolean} [useTokenExtensions=true] - Use Token Extensions program instead of classic Token program
@@ -480,7 +481,7 @@ export interface Connection {
    */
   mintTokens: (
     mintAddress: Address,
-    mintAuthority: KeyPairSigner,
+    mintAuthority: TransactionSendingSigner,
     amount: bigint,
     destination: Address,
     useTokenExtensions?: boolean,
@@ -489,7 +490,7 @@ export interface Connection {
   /**
    * Transfers SPL tokens between accounts.
    * @param {Object} params - Transfer details
-   * @param {KeyPairSigner} params.sender - Account sending the tokens (must sign)
+   * @param {TransactionSendingSigner} params.sender - Account sending the tokens (must sign)
    * @param {Address} params.destination - Account receiving the tokens
    * @param {Address} params.mintAddress - The type of token to transfer
    * @param {bigint} params.amount - Number of base units to transfer (adjusted for decimals)

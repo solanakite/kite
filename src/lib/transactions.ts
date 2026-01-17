@@ -17,6 +17,8 @@ import {
   signAndSendTransactionMessageWithSigners,
   signTransactionMessageWithSigners,
   TransactionSendingSigner,
+  TransactionSigner,
+  TransactionModifyingSigner,
   assertIsTransactionMessageWithBlockhashLifetime,
   Blockhash,
 } from "@solana/kit";
@@ -52,7 +54,7 @@ export const sendTransactionFromInstructionsWithWalletAppFactory = (
     instructions,
     abortSignal = null,
   }: {
-    feePayer: TransactionSendingSigner;
+    feePayer: TransactionModifyingSigner;
     instructions: Array<Instruction>;
     abortSignal?: AbortSignal | null;
   }) => {
@@ -63,8 +65,11 @@ export const sendTransactionFromInstructionsWithWalletAppFactory = (
       (message) => setTransactionMessageLifetimeUsingBlockhash(latestBlockhash, message),
       (message) => appendTransactionMessageInstructions(instructions, message),
     );
-    assertIsTransactionMessageWithSingleSendingSigner(transactionMessage);
-    const signatureBytes = await signAndSendTransactionMessageWithSigners(transactionMessage);
+    const signedTransaction = await signTransactionMessageWithSigners(transactionMessage);
+    const signatureBytes = await rpc.sendTransaction(signedTransaction, {
+      encoding: "base64",
+      skipPreflight: false,
+    }).send({ abortSignal });
     const signature = signatureBytesToBase58String(signatureBytes);
     return signature;
   };
@@ -87,7 +92,7 @@ export const sendTransactionFromInstructionsFactory = (
     abortSignal = null,
     timeout,
   }: {
-    feePayer: KeyPairSigner;
+    feePayer: TransactionSendingSigner;
     instructions: Array<Instruction>;
     commitment?: Commitment;
     skipPreflight?: boolean;
