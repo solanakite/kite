@@ -195,6 +195,109 @@ describe("tokens", () => {
       message: "wallet and mint are required when tokenAccount is not provided",
     });
   });
+
+  test("burnTokens burns tokens from an account", async () => {
+    const burnTestMint = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals,
+      name: "Burn test token",
+      symbol: "BURN",
+      uri: "https://example.com",
+    });
+
+    await connection.mintTokens(burnTestMint, sender, 1000n, sender.address);
+
+    const balanceBefore = await connection.getTokenAccountBalance({
+      wallet: sender.address,
+      mint: burnTestMint,
+      useTokenExtensions: true,
+    });
+
+    assert.equal(balanceBefore.amount, 1000n);
+
+    const burnSignature = await connection.burnTokens({
+      mintAddress: burnTestMint,
+      owner: sender,
+      amount: 500n,
+      useTokenExtensions: true,
+    });
+
+    assert.ok(burnSignature);
+
+    const balanceAfter = await connection.getTokenAccountBalance({
+      wallet: sender.address,
+      mint: burnTestMint,
+      useTokenExtensions: true,
+    });
+
+    assert.equal(balanceAfter.amount, 500n);
+  });
+
+  test("burnTokens throws error when mint not found", async () => {
+    const fakeMintAddress = toAddress("11111111111111111111111111111111");
+    await assert.rejects(
+      () =>
+        connection.burnTokens({
+          mintAddress: fakeMintAddress,
+          owner: sender,
+          amount: 1n,
+        }),
+      /Failed to decode account data/,
+    );
+  });
+
+  test("closeTokenAccount closes an account with zero balance", async () => {
+    const closeTestMint = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals,
+      name: "Close test token",
+      symbol: "CLOSE",
+      uri: "https://example.com",
+    });
+
+    await connection.mintTokens(closeTestMint, sender, 100n, recipient.address);
+
+    await connection.burnTokens({
+      mintAddress: closeTestMint,
+      owner: recipient,
+      amount: 100n,
+      useTokenExtensions: true,
+    });
+
+    const balanceBeforeClose = await connection.getTokenAccountBalance({
+      wallet: recipient.address,
+      mint: closeTestMint,
+      useTokenExtensions: true,
+    });
+    assert.equal(balanceBeforeClose.amount, 0n);
+
+    const closeSignature = await connection.closeTokenAccount({
+      owner: recipient,
+      wallet: recipient.address,
+      mint: closeTestMint,
+      useTokenExtensions: true,
+    });
+
+    assert.ok(closeSignature);
+
+    const isClosed = await connection.checkTokenAccountIsClosed({
+      wallet: recipient.address,
+      mint: closeTestMint,
+      useTokenExtensions: true,
+    });
+
+    assert.equal(isClosed, true);
+  });
+
+  test("closeTokenAccount throws error when neither tokenAccount nor wallet+mint provided", async () => {
+    await assert.rejects(
+      () =>
+        connection.closeTokenAccount({
+          owner: sender,
+        }),
+      { message: "Either tokenAccount or both wallet and mint must be provided" },
+    );
+  });
 });
 
 describe("createTokenMint", () => {

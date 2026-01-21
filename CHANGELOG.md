@@ -4,6 +4,22 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 2.3.0
+
+### Additions
+
+- Add `burnTokens()` function to burn tokens from a token account. Supports both Token Extensions and Classic Tokens with proper decimal handling
+- Add `closeTokenAccount()` function to close token accounts and reclaim rent. Supports both direct token account address and wallet+mint lookup
+- Add `getLatestBlockhash()` function to get the latest blockhash from the network
+- Add `checkHealth()` function to check the health status of the cluster node
+- Add `getCurrentSlot()` function to get the current slot the node is processing
+- Add `getMinimumBalance()` function to calculate the minimum balance required for rent exemption for a given data size
+- Add `getTransaction()` function to get transaction details by signature
+
+### Changes
+
+- Add optional `commitment` parameter to `transferLamports()` (defaults to "confirmed") to ensure transactions reach desired commitment level before returning
+
 ## Kite version 2.2.0
 
 ### Changes
