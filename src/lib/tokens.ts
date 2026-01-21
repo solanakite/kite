@@ -17,6 +17,8 @@ import {
   getCreateAssociatedTokenInstruction,
   Extension,
   Mint,
+  getBurnCheckedInstruction as getBurnCheckedInstructionToken2022,
+  getCloseAccountInstruction as getCloseAccountInstructionToken2022,
 } from "@solana-program/token-2022";
 import { createSolanaRpcFromTransport, KeyPairSigner, TransactionSendingSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
@@ -36,6 +38,7 @@ export const transferLamportsFactory = (
     source,
     destination,
     amount,
+    commitment = "confirmed",
     skipPreflight = true,
     maximumClientSideRetries = 0,
     abortSignal = null,
@@ -43,6 +46,7 @@ export const transferLamportsFactory = (
     source: TransactionSendingSigner;
     destination: Address;
     amount: Lamports;
+    commitment?: Commitment;
     skipPreflight?: boolean;
     maximumClientSideRetries?: number;
     abortSignal?: AbortSignal | null;
@@ -56,7 +60,7 @@ export const transferLamportsFactory = (
     const signature = await sendTransactionFromInstructions({
       feePayer: source,
       instructions: [instruction],
-      commitment: "confirmed",
+      commitment,
       skipPreflight,
       maximumClientSideRetries,
       abortSignal,
@@ -786,4 +790,144 @@ export const watchTokenBalanceFactory = (
    * - balance: the token balance object with amount, decimals, uiAmount, uiAmountString (null if error)
    */
   return watchTokenBalance;
+};
+
+export const burnTokensFactory = (
+  getMint: ReturnType<typeof getMintFactory>,
+  sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
+) => {
+  const burnTokens = async ({
+    mintAddress,
+    owner,
+    amount,
+    useTokenExtensions = true,
+    skipPreflight = true,
+    maximumClientSideRetries = 0,
+    abortSignal = null,
+  }: {
+    mintAddress: Address;
+    owner: TransactionSendingSigner;
+    amount: bigint;
+    useTokenExtensions?: boolean;
+    skipPreflight?: boolean;
+    maximumClientSideRetries?: number;
+    abortSignal?: AbortSignal | null;
+  }) => {
+    const tokenProgram = useTokenExtensions ? TOKEN_EXTENSIONS_PROGRAM : TOKEN_PROGRAM;
+
+    const mint = await getMint(mintAddress);
+
+    if (!mint) {
+      throw new Error(`Mint not found: ${mintAddress}`);
+    }
+
+    const decimals = mint.data.decimals;
+
+    const tokenAccount = await getTokenAccountAddress(owner.address, mintAddress, useTokenExtensions);
+
+    let burnInstruction;
+
+    if (useTokenExtensions) {
+      burnInstruction = getBurnCheckedInstructionToken2022({
+        account: tokenAccount,
+        mint: mintAddress,
+        authority: owner,
+        amount,
+        decimals,
+      });
+    } else {
+      const { getBurnCheckedInstruction: getBurnCheckedInstructionClassic } = await import("@solana-program/token");
+      burnInstruction = getBurnCheckedInstructionClassic(
+        {
+          account: tokenAccount,
+          mint: mintAddress,
+          authority: owner,
+          amount,
+          decimals,
+        },
+        { programAddress: tokenProgram },
+      );
+    }
+
+    const signature = await sendTransactionFromInstructions({
+      feePayer: owner,
+      instructions: [burnInstruction],
+      commitment: "confirmed",
+      skipPreflight,
+      maximumClientSideRetries,
+      abortSignal,
+    });
+
+    return signature;
+  };
+
+  return burnTokens;
+};
+
+export const closeTokenAccountFactory = (
+  sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
+) => {
+  const closeTokenAccount = async ({
+    owner,
+    tokenAccount,
+    wallet,
+    mint,
+    destination,
+    useTokenExtensions = true,
+    skipPreflight = true,
+    maximumClientSideRetries = 0,
+    abortSignal = null,
+  }: {
+    owner: TransactionSendingSigner;
+    tokenAccount?: Address;
+    wallet?: Address;
+    mint?: Address;
+    destination?: Address;
+    useTokenExtensions?: boolean;
+    skipPreflight?: boolean;
+    maximumClientSideRetries?: number;
+    abortSignal?: AbortSignal | null;
+  }) => {
+    let accountToClose: Address;
+
+    if (tokenAccount) {
+      accountToClose = tokenAccount;
+    } else if (wallet && mint) {
+      accountToClose = await getTokenAccountAddress(wallet, mint, useTokenExtensions);
+    } else {
+      throw new Error("Either tokenAccount or both wallet and mint must be provided");
+    }
+
+    const rentDestination = destination || owner.address;
+
+    let closeInstruction;
+
+    if (useTokenExtensions) {
+      closeInstruction = getCloseAccountInstructionToken2022({
+        account: accountToClose,
+        destination: rentDestination,
+        owner,
+      });
+    } else {
+      const { getCloseAccountInstruction: getCloseAccountInstructionClassic } = await import("@solana-program/token");
+      closeInstruction = getCloseAccountInstructionClassic({
+        account: accountToClose,
+        destination: rentDestination,
+        owner,
+      });
+    }
+
+    const signature = await sendTransactionFromInstructions({
+      feePayer: owner,
+      instructions: [closeInstruction],
+      commitment: "confirmed",
+      skipPreflight,
+      maximumClientSideRetries,
+      abortSignal,
+    });
+
+    return signature;
+  };
+
+  return closeTokenAccount;
 };

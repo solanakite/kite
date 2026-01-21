@@ -34,6 +34,8 @@ import {
   getTokenAccountBalanceFactory,
   checkTokenAccountIsClosedFactory,
   getTokenMetadataFactory,
+  burnTokensFactory,
+  closeTokenAccountFactory,
 } from "./tokens";
 import { getLogsFactory } from "./logs";
 import { getExplorerLinkFactory } from "./explorer";
@@ -43,6 +45,13 @@ import { getPDAAndBump } from "./pdas";
 import { getAccountsFactoryFactory } from "./accounts";
 import { signMessageFromWalletApp } from "./messages";
 import { checkAddressMatchesPrivateKey } from "./keypair";
+import {
+  getLatestBlockhashFactory,
+  checkHealthFactory,
+  getCurrentSlotFactory,
+  getMinimumBalanceFactory,
+  getTransactionFactory,
+} from "./rpc";
 
 /**
  * Converts an HTTP(S) URL to the corresponding WS(S) URL.
@@ -246,6 +255,20 @@ export const connect = (
 
   const getTokenMetadata = getTokenMetadataFactory(rpc);
 
+  const burnTokens = burnTokensFactory(getMint, sendTransactionFromInstructions);
+
+  const closeTokenAccount = closeTokenAccountFactory(sendTransactionFromInstructions);
+
+  const getLatestBlockhash = getLatestBlockhashFactory(rpc);
+
+  const checkHealth = checkHealthFactory(rpc);
+
+  const getCurrentSlot = getCurrentSlotFactory(rpc);
+
+  const getMinimumBalance = getMinimumBalanceFactory(rpc);
+
+  const getTransaction = getTransactionFactory(rpc);
+
   const getAccountsFactory = getAccountsFactoryFactory(rpc);
 
   return {
@@ -274,6 +297,13 @@ export const connect = (
     getPDAAndBump,
     checkTokenAccountIsClosed,
     getTokenMetadata,
+    burnTokens,
+    closeTokenAccount,
+    getLatestBlockhash,
+    checkHealth,
+    getCurrentSlot,
+    getMinimumBalance,
+    getTransaction,
     getAccountsFactory,
     signatureBytesToBase58String,
     signatureBase58StringToBytes,
@@ -626,4 +656,71 @@ export interface Connection {
    * @returns {Promise<boolean>} True if the address is a valid Ed25519 public key, false otherwise
    */
   checkIfAddressIsPublicKey: typeof checkIfAddressIsPublicKey;
+
+  /**
+   * Burns (permanently destroys) tokens from an account.
+   * @param {Object} params - Burn parameters
+   * @param {Address} params.mintAddress - The token mint address
+   * @param {KeyPairSigner} params.owner - The owner of the tokens to burn
+   * @param {bigint} params.amount - Number of base units to burn (adjusted for decimals)
+   * @param {boolean} [params.useTokenExtensions=true] - Use Token Extensions program instead of classic Token program
+   * @param {boolean} [params.skipPreflight=true] - Skip pre-flight checks
+   * @param {number} [params.maximumClientSideRetries=0] - Number of retry attempts
+   * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the operation
+   * @returns {Promise<string>} Transaction signature
+   */
+  burnTokens: ReturnType<typeof burnTokensFactory>;
+
+  /**
+   * Closes a token account and reclaims rent.
+   * The account must have a zero balance before it can be closed.
+   * @param {Object} params - Close account parameters
+   * @param {KeyPairSigner} params.owner - The owner of the token account
+   * @param {Address} [params.tokenAccount] - Direct token account address to close
+   * @param {Address} [params.wallet] - Wallet address (required if tokenAccount not provided)
+   * @param {Address} [params.mint] - Token mint address (required if tokenAccount not provided)
+   * @param {Address} [params.destination] - Where to send reclaimed rent (defaults to owner)
+   * @param {boolean} [params.useTokenExtensions=true] - Use Token Extensions program instead of classic Token program
+   * @param {boolean} [params.skipPreflight=true] - Skip pre-flight checks
+   * @param {number} [params.maximumClientSideRetries=0] - Number of retry attempts
+   * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the operation
+   * @returns {Promise<string>} Transaction signature
+   */
+  closeTokenAccount: ReturnType<typeof closeTokenAccountFactory>;
+
+  /**
+   * Gets the latest blockhash from the network.
+   * @param {Commitment} [commitment="finalized"] - Confirmation level to use
+   * @returns {Promise<Object>} Object containing blockhash, lastValidBlockHeight, and context
+   */
+  getLatestBlockhash: ReturnType<typeof getLatestBlockhashFactory>;
+
+  /**
+   * Checks the health status of the cluster node.
+   * @returns {Promise<boolean>} true if the node is healthy, false otherwise
+   */
+  checkHealth: ReturnType<typeof checkHealthFactory>;
+
+  /**
+   * Gets the current slot the node is processing.
+   * @param {Commitment} [commitment="finalized"] - Confirmation level to use
+   * @returns {Promise<bigint>} The current slot number
+   */
+  getCurrentSlot: ReturnType<typeof getCurrentSlotFactory>;
+
+  /**
+   * Calculates the minimum balance required for rent exemption for a given data size.
+   * @param {bigint} dataLength - The size of the account data in bytes
+   * @returns {Promise<Lamports>} The minimum balance in lamports needed for rent exemption
+   */
+  getMinimumBalance: ReturnType<typeof getMinimumBalanceFactory>;
+
+  /**
+   * Gets transaction details by signature.
+   * @param {string} signature - The transaction signature to look up
+   * @param {Commitment} [commitment="finalized"] - Confirmation level to use
+   * @param {number} [maxSupportedTransactionVersion=0] - Maximum transaction version to return
+   * @returns {Promise<Object | null>} Transaction details or null if not found
+   */
+  getTransaction: ReturnType<typeof getTransactionFactory>;
 }
