@@ -12,10 +12,17 @@ Kite uses smart defaults that require less code than every other Solana client, 
 - **Never get locked in** - Built on Solana Kit with identical types, so you can drop down to `connection.rpc` whenever you need full control
 
 [Solana Kite website](https://solanakite.org)
+
 [Documentation](https://solanakite.org/docs)
+
 [npm](https://www.npmjs.com/package/solana-kite)
+
 [GitHub](https://github.com/solanakite/kite)
+
 [Example Projects](https://solanakite.org/docs/examples)
+
 [Videos](https://solanakite.org/docs/videos)
+
 [Kite on Solana Stack Exchange](https://solana.stackexchange.com/search?q=kite)
+
 [Changelog](https://solanakite.org/docs/changelog)
