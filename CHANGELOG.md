@@ -4,6 +4,24 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 3.0.0
+
+### Major Changes
+
+- **Kite is now a Solana Kit plugin** - Internally rewritten to use the Solana Kit plugin pattern, making it composable with other plugins
+- New `createKitePlugin()` function allows using Kite as a plugin: `rpc.use(createKitePlugin({ clusterNameOrURL: 'devnet' }))`
+- The existing `connect()` convenience function remains unchanged and is 100% backwards compatible
+
+### Backwards Compatibility
+
+This release maintains full API compatibility with Kite 2.x. Projects can upgrade from 2.x to 3.0.0 without any code changes. The major version bump reflects the significant internal refactoring to use the plugin architecture, but all existing functionality works identically.
+
+### Technical Details
+
+- `connect()` now internally uses the plugin pattern but maintains the same synchronous API
+- Both plugin usage and the convenience function provide identical functionality
+- All 141 tests pass with no changes required
+
 ## Kite version 2.3.0
 
 ### Additions

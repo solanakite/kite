@@ -10,6 +10,31 @@ Kite uses smart defaults that require less code than every other Solana client, 
 - **Ship faster with single-line operations** - Create funded wallets, send tokens, create tokens, and make arbitrary transactions without the boilerplate of lower-level clients
 - **5 example projects and 6+ video tutorials and hand written editor docs** show you how to build production-ready Solana apps
 - **Never get locked in** - Built on Solana Kit with identical types, so you can drop down to `connection.rpc` whenever you need full control
+- **Use as a plugin** - Kite 3.0+ implements the Solana Kit plugin pattern, making it composable with other plugins while maintaining the simple convenience API
+
+## Quick Start
+
+```typescript
+import { connect } from 'solana-kite';
+
+const connection = connect('devnet');
+const wallet = await connection.createWallet();
+```
+
+## Plugin Usage (New in 3.0)
+
+Kite can now be used as a Solana Kit plugin, allowing composition with other plugins:
+
+```typescript
+import { createSolanaRpc, createDefaultRpcTransport } from '@solana/kit';
+import { createKitePlugin } from 'solana-kite';
+
+const transport = createDefaultRpcTransport({ url: 'https://api.devnet.solana.com' });
+const rpc = createSolanaRpc(transport);
+const connection = rpc.use(createKitePlugin({ clusterNameOrURL: 'devnet' }));
+```
+
+Both approaches provide the same functionality. The `connect()` convenience function is a drop-in replacement for Kite 2.x projects.
 
 [Solana Kite website](https://solanakite.org)
 

@@ -192,7 +192,7 @@ describe("airdropIfRequired", () => {
 
     // Spend our SOL now to ensure we can use the airdrop immediately
     const transferSignature = await connection.transferLamports({
-      source: user,
+      source: user as any,
       destination: recipient.address,
       amount: lamports(1_000_000n),
     });

@@ -1,16 +1,16 @@
 import { before, describe, test } from "node:test";
 import assert from "node:assert";
 import { connect } from "..";
-import { KeyPairSigner, lamports, Address, address as toAddress } from "@solana/kit";
+import { KeyPairSigner, lamports, Address, address as toAddress, TransactionSendingSigner } from "@solana/kit";
 import { SOL, TOKEN_PROGRAM } from "../lib/constants";
 import { Connection } from "../lib/connect";
 import { fetchMint } from "@solana-program/token";
 
 describe("tokens", () => {
   let connection: Connection;
-  let sender: KeyPairSigner;
+  let sender: KeyPairSigner & TransactionSendingSigner;
   let mintAddress: Address;
-  let recipient: KeyPairSigner;
+  let recipient: KeyPairSigner & TransactionSendingSigner;
   const decimals = 9;
   before(async () => {
     connection = connect();
@@ -388,9 +388,9 @@ describe("getTokenMetadata", () => {
 
 describe("classic token program", () => {
   let connection: Connection;
-  let sender: KeyPairSigner;
+  let sender: KeyPairSigner & TransactionSendingSigner;
   let mintAddress: Address;
-  let recipient: KeyPairSigner;
+  let recipient: KeyPairSigner & TransactionSendingSigner;
   const decimals = 9;
   before(async () => {
     connection = connect();
