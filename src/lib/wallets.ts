@@ -1,4 +1,4 @@
-import { Commitment, createSignerFromKeyPair, KeyPairSigner, Lamports } from "@solana/kit";
+import { Commitment, createSignerFromKeyPair, KeyPairSigner, Lamports, TransactionSendingSigner } from "@solana/kit";
 import { DEFAULT_AIRDROP_AMOUNT, DEFAULT_ENV_KEYPAIR_VARIABLE_NAME } from "./constants";
 import { addKeyPairSignerToEnvFile, createJSONFromKeyPairSigner, grindKeyPair, loadWalletFromEnvironment } from "./keypair";
 import dotenv from "dotenv";
@@ -45,7 +45,7 @@ export const createWalletFactory = (airdropIfRequired: ReturnType<typeof airdrop
       airdropAmount?: Lamports | null;
       commitment?: Commitment | null;
     } = {},
-  ): Promise<KeyPairSigner> => {
+  ): Promise<KeyPairSigner & TransactionSendingSigner> => {
     // If the user wants to save to an env variable, we need to save to a file
     if (options.envVariableName && !options.envFileName) {
       options.envFileName = ".env";
@@ -126,7 +126,7 @@ export const createWalletFactory = (airdropIfRequired: ReturnType<typeof airdrop
       await airdropIfRequired(finalKeyPairSigner.address, airdropAmount, airdropAmount, commitment);
     }
 
-    return finalKeyPairSigner;
+    return finalKeyPairSigner as any;
   };
 
   return createWallet;
@@ -137,7 +137,7 @@ export const createWalletsFactory = (createWallet: ReturnType<typeof createWalle
   const createWallets = (
     amount: number,
     options: Parameters<ReturnType<typeof createWalletFactory>>[0] = {},
-  ): Promise<Array<KeyPairSigner>> => {
+  ): Promise<Array<KeyPairSigner & TransactionSendingSigner>> => {
     const walletPromises = Array.from({ length: amount }, () => createWallet(options));
     return Promise.all(walletPromises);
   };

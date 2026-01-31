@@ -137,8 +137,141 @@ export const getClusterDetailsFromClusterConfig = (
   throw new Error(`Cluster ${clusterName} has null URLs but no requiredRpcEnvironmentVariable specified.`);
 };
 
+export interface KitePluginConfig {
+  clusterNameOrURL?: string;
+  webSocketURL?: string;
+}
+
+/**
+ * Creates a Kite plugin that extends a Solana Kit RPC client with helpful utility functions.
+ * This plugin adds wallet creation, token operations, transaction helpers, and more.
+ *
+ * @param {KitePluginConfig} [config={}] - Configuration for the plugin
+ * @param {string} [config.clusterNameOrURL="localnet"] - Cluster name or HTTP URL
+ * @param {string} [config.webSocketURL] - WebSocket URL for subscriptions (auto-derived if not provided)
+ * @returns A plugin function that extends RPC clients with Kite functionality
+ *
+ * @example
+ * // Use as a plugin
+ * const client = createSolanaRpc(url).use(createKitePlugin({ clusterNameOrURL: 'devnet' }));
+ */
+export const createKitePlugin = (config: KitePluginConfig = {}) => {
+  return <T extends ReturnType<typeof createSolanaRpcFromTransport<RpcTransport>>>(
+    rpc: T,
+  ): T & Connection => {
+    const { clusterNameOrURL = "localnet", webSocketURL } = config;
+
+    let rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
+    let clusterName = clusterNameOrURL;
+    let wsUrl: string;
+
+    // Postel's law: be liberal in what you accept
+    if (clusterName === "mainnet") {
+      clusterName = "mainnet-beta";
+    }
+
+    // Determine WebSocket URL
+    if (webSocketURL) {
+      wsUrl = webSocketURL;
+    } else if (KNOWN_CLUSTER_NAMES.includes(clusterName)) {
+      const clusterDetails = CLUSTERS[clusterName];
+      const { webSocketURL: derivedWsUrl } = getClusterDetailsFromClusterConfig(clusterName, clusterDetails);
+      wsUrl = derivedWsUrl;
+    } else if (checkIsValidURL(clusterName)) {
+      wsUrl = getWebsocketUrlFromHTTPUrl(clusterName);
+    } else {
+      throw new Error(
+        `Unsupported cluster name (valid options are ${KNOWN_CLUSTER_NAMES_STRING}) or URL: ${clusterName}`,
+      );
+    }
+
+    rpcSubscriptions = createSolanaRpcSubscriptions(wsUrl);
+
+    const supportsGetPriorityFeeEstimate = false;
+    const needsPriorityFees = false;
+    const enableClientSideRetries = false;
+
+    const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions } as any);
+    const getRecentSignatureConfirmation = createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions } as any);
+    const airdropIfRequired = airdropIfRequiredFactory(rpc, rpcSubscriptions);
+    const createWallet = createWalletFactory(airdropIfRequired);
+    const createWallets = createWalletsFactory(createWallet);
+    const getLogs = getLogsFactory(rpc);
+
+    const sendTransactionFromInstructions = sendTransactionFromInstructionsFactory(
+      rpc,
+      needsPriorityFees,
+      supportsGetPriorityFeeEstimate,
+      enableClientSideRetries,
+      sendAndConfirmTransaction,
+    );
+
+    const transferLamports = transferLamportsFactory(sendTransactionFromInstructions);
+    const createTokenMint = createTokenMintFactory(rpc, sendTransactionFromInstructions);
+    const getMint = getMintFactory(rpc);
+    const transferTokens = transferTokensFactory(getMint, sendTransactionFromInstructions);
+    const mintTokens = mintTokensFactory(sendTransactionFromInstructions);
+    const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
+    const checkTokenAccountIsClosed = checkTokenAccountIsClosedFactory(getTokenAccountBalance);
+    const getTokenMetadata = getTokenMetadataFactory(rpc);
+    const burnTokens = burnTokensFactory(getMint, sendTransactionFromInstructions);
+    const closeTokenAccount = closeTokenAccountFactory(sendTransactionFromInstructions);
+    const getLatestBlockhash = getLatestBlockhashFactory(rpc);
+    const checkHealth = checkHealthFactory(rpc);
+    const getCurrentSlot = getCurrentSlotFactory(rpc);
+    const getMinimumBalance = getMinimumBalanceFactory(rpc);
+    const getTransaction = getTransactionFactory(rpc);
+    const getAccountsFactory = getAccountsFactoryFactory(rpc);
+
+    return {
+      ...rpc,
+      rpc,
+      rpcSubscriptions,
+      sendAndConfirmTransaction,
+      sendTransactionFromInstructions,
+      getLamportBalance: getLamportBalanceFactory(rpc),
+      watchLamportBalance: watchLamportBalanceFactory(rpc, rpcSubscriptions),
+      watchTokenBalance: watchTokenBalanceFactory(rpc, rpcSubscriptions),
+      getExplorerLink: getExplorerLinkFactory(clusterName),
+      airdropIfRequired,
+      createWallet,
+      createWallets,
+      getLogs,
+      getRecentSignatureConfirmation,
+      transferLamports,
+      transferTokens,
+      createTokenMint,
+      mintTokens,
+      getTokenAccountAddress,
+      loadWalletFromFile,
+      loadWalletFromEnvironment,
+      getMint,
+      getTokenAccountBalance,
+      getPDAAndBump,
+      checkTokenAccountIsClosed,
+      getTokenMetadata,
+      burnTokens,
+      closeTokenAccount,
+      getLatestBlockhash,
+      checkHealth,
+      getCurrentSlot,
+      getMinimumBalance,
+      getTransaction,
+      getAccountsFactory,
+      signatureBytesToBase58String,
+      signatureBase58StringToBytes,
+      sendTransactionFromInstructionsWithWalletApp: sendTransactionFromInstructionsWithWalletAppFactory(rpc),
+      signMessageFromWalletApp,
+      checkAddressMatchesPrivateKey,
+      checkIfAddressIsPublicKey,
+    };
+  };
+};
+
 /**
  * Creates a connection to a Solana cluster with all helper functions pre-configured.
+ * This is a convenience wrapper around the Kite plugin.
+ *
  * @param {string | ReturnType<typeof createSolanaRpcFromTransport>} [clusterNameOrURLOrRpc="localnet"] - Either:
  *                 - A cluster name, from this list:
  *                   Public clusters (note these are rate limited, you should use a commercial RPC provider for production apps)
@@ -163,11 +296,8 @@ export const connect = (
   clusterWebSocketURLOrRpcSubscriptions: string | ReturnType<typeof createSolanaRpcSubscriptions> | null = null,
 ): Connection => {
   let rpc: ReturnType<typeof createSolanaRpcFromTransport<RpcTransport>>;
-  let rpcSubscriptions: RpcSubscriptions<SolanaRpcSubscriptionsApi>;
-  let supportsGetPriorityFeeEstimate: boolean = false;
-  let needsPriorityFees: boolean = false;
-  let enableClientSideRetries: boolean = false;
   let clusterNameOrURL: string;
+  let webSocketURL: string | undefined;
 
   // Check if first argument is an RPC client
   if (typeof clusterNameOrURLOrRpc !== "string") {
@@ -175,143 +305,126 @@ export const connect = (
     if (!clusterWebSocketURLOrRpcSubscriptions || typeof clusterWebSocketURLOrRpcSubscriptions === "string") {
       throw new Error("When providing an RPC client, you must also provide an RPC subscriptions client");
     }
-    rpcSubscriptions = clusterWebSocketURLOrRpcSubscriptions;
-    clusterNameOrURL = "custom"; // Use a default name for explorer links
+    // When a pre-configured RPC client is provided, we need to handle subscriptions differently
+    // For now, we'll use "custom" as the cluster name
+    clusterNameOrURL = "custom";
+    // We can't easily use the plugin pattern here since we have a pre-configured RPC subscriptions client
+    // Fall back to the original direct implementation for this case
+    const rpcSubscriptions = clusterWebSocketURLOrRpcSubscriptions;
+    const supportsGetPriorityFeeEstimate = false;
+    const needsPriorityFees = false;
+    const enableClientSideRetries = false;
+
+    const sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions } as any);
+    const getRecentSignatureConfirmation = createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions } as any);
+    const airdropIfRequired = airdropIfRequiredFactory(rpc, rpcSubscriptions);
+    const createWallet = createWalletFactory(airdropIfRequired);
+    const createWallets = createWalletsFactory(createWallet);
+    const getLogs = getLogsFactory(rpc);
+
+    const sendTransactionFromInstructions = sendTransactionFromInstructionsFactory(
+      rpc,
+      needsPriorityFees,
+      supportsGetPriorityFeeEstimate,
+      enableClientSideRetries,
+      sendAndConfirmTransaction,
+    );
+
+    const transferLamports = transferLamportsFactory(sendTransactionFromInstructions);
+    const createTokenMint = createTokenMintFactory(rpc, sendTransactionFromInstructions);
+    const getMint = getMintFactory(rpc);
+    const transferTokens = transferTokensFactory(getMint, sendTransactionFromInstructions);
+    const mintTokens = mintTokensFactory(sendTransactionFromInstructions);
+    const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
+    const checkTokenAccountIsClosed = checkTokenAccountIsClosedFactory(getTokenAccountBalance);
+    const getTokenMetadata = getTokenMetadataFactory(rpc);
+    const burnTokens = burnTokensFactory(getMint, sendTransactionFromInstructions);
+    const closeTokenAccount = closeTokenAccountFactory(sendTransactionFromInstructions);
+    const getLatestBlockhash = getLatestBlockhashFactory(rpc);
+    const checkHealth = checkHealthFactory(rpc);
+    const getCurrentSlot = getCurrentSlotFactory(rpc);
+    const getMinimumBalance = getMinimumBalanceFactory(rpc);
+    const getTransaction = getTransactionFactory(rpc);
+    const getAccountsFactory = getAccountsFactoryFactory(rpc);
+
+    return {
+      rpc,
+      rpcSubscriptions,
+      sendAndConfirmTransaction,
+      sendTransactionFromInstructions,
+      getLamportBalance: getLamportBalanceFactory(rpc),
+      watchLamportBalance: watchLamportBalanceFactory(rpc, rpcSubscriptions),
+      watchTokenBalance: watchTokenBalanceFactory(rpc, rpcSubscriptions),
+      getExplorerLink: getExplorerLinkFactory(clusterNameOrURL),
+      airdropIfRequired,
+      createWallet,
+      createWallets,
+      getLogs,
+      getRecentSignatureConfirmation,
+      transferLamports,
+      transferTokens,
+      createTokenMint,
+      mintTokens,
+      getTokenAccountAddress,
+      loadWalletFromFile,
+      loadWalletFromEnvironment,
+      getMint,
+      getTokenAccountBalance,
+      getPDAAndBump,
+      checkTokenAccountIsClosed,
+      getTokenMetadata,
+      burnTokens,
+      closeTokenAccount,
+      getLatestBlockhash,
+      checkHealth,
+      getCurrentSlot,
+      getMinimumBalance,
+      getTransaction,
+      getAccountsFactory,
+      signatureBytesToBase58String,
+      signatureBase58StringToBytes,
+      sendTransactionFromInstructionsWithWalletApp: sendTransactionFromInstructionsWithWalletAppFactory(rpc),
+      signMessageFromWalletApp,
+      checkAddressMatchesPrivateKey,
+      checkIfAddressIsPublicKey,
+    };
+  }
+
+  // String argument - create RPC client and use plugin
+  clusterNameOrURL = clusterNameOrURLOrRpc;
+
+  // Postel's law: be liberal in what you accept
+  if (clusterNameOrURL === "mainnet") {
+    clusterNameOrURL = "mainnet-beta";
+  }
+
+  if (KNOWN_CLUSTER_NAMES.includes(clusterNameOrURL)) {
+    const clusterDetails = CLUSTERS[clusterNameOrURL];
+    const { httpURL, webSocketURL: wsUrl } = getClusterDetailsFromClusterConfig(clusterNameOrURL, clusterDetails);
+
+    const transport = createDefaultRpcTransport({ url: httpURL });
+    rpc = createSolanaRpcFromTransport(transport);
+    webSocketURL = wsUrl;
   } else {
-    clusterNameOrURL = clusterNameOrURLOrRpc;
-    // Postel's law: be liberal in what you accept - so include 'mainnet' as well as 'mainnet-beta'
-    if (clusterNameOrURL === "mainnet") {
-      clusterNameOrURL = "mainnet-beta";
+    if (!clusterWebSocketURLOrRpcSubscriptions || typeof clusterWebSocketURLOrRpcSubscriptions !== "string") {
+      throw new Error(
+        `Missing clusterWebSocketURL. Either provide a valid cluster name (${KNOWN_CLUSTER_NAMES_STRING}) or two valid URLs.`,
+      );
     }
-
-    if (KNOWN_CLUSTER_NAMES.includes(clusterNameOrURL)) {
-      const clusterDetails = CLUSTERS[clusterNameOrURL];
-
-      const { httpURL, webSocketURL, features } = getClusterDetailsFromClusterConfig(clusterNameOrURL, clusterDetails);
-
-      const transport = createDefaultRpcTransport({
-        url: httpURL,
-      });
-
+    if (checkIsValidURL(clusterNameOrURL) && checkIsValidURL(clusterWebSocketURLOrRpcSubscriptions)) {
+      const transport = createDefaultRpcTransport({ url: clusterNameOrURL });
       rpc = createSolanaRpcFromTransport(transport);
-      rpcSubscriptions = createSolanaRpcSubscriptions(webSocketURL);
+      webSocketURL = clusterWebSocketURLOrRpcSubscriptions;
     } else {
-      if (!clusterWebSocketURLOrRpcSubscriptions || typeof clusterWebSocketURLOrRpcSubscriptions !== "string") {
-        throw new Error(
-          `Missing clusterWebSocketURL. Either provide a valid cluster name (${KNOWN_CLUSTER_NAMES_STRING}) or two valid URLs.`,
-        );
-      }
-      if (checkIsValidURL(clusterNameOrURL) && checkIsValidURL(clusterWebSocketURLOrRpcSubscriptions)) {
-        const transport = createDefaultRpcTransport({
-          url: clusterNameOrURL,
-        });
-
-        rpc = createSolanaRpcFromTransport(transport);
-        rpcSubscriptions = createSolanaRpcSubscriptions(clusterWebSocketURLOrRpcSubscriptions);
-      } else {
-        throw new Error(
-          `Unsupported cluster name (valid options are ${KNOWN_CLUSTER_NAMES_STRING}) or URL: ${clusterNameOrURL}. `,
-        );
-      }
+      throw new Error(
+        `Unsupported cluster name (valid options are ${KNOWN_CLUSTER_NAMES_STRING}) or URL: ${clusterNameOrURL}`,
+      );
     }
   }
 
-  // Create the transaction confirmation functions based on the cluster name
-  let sendAndConfirmTransaction = sendAndConfirmTransactionFactory({ rpc, rpcSubscriptions });
-
-  // Let's avoid data types like 'Promise' into the function name
-  // we're not using Hungarian notation, this isn't common TS behavior, and it's not necessary to do so
-  const getRecentSignatureConfirmation = createRecentSignatureConfirmationPromiseFactory({ rpc, rpcSubscriptions });
-
-  const airdropIfRequired = airdropIfRequiredFactory(rpc, rpcSubscriptions);
-
-  const createWallet = createWalletFactory(airdropIfRequired);
-
-  const createWallets = createWalletsFactory(createWallet);
-
-  const getLogs = getLogsFactory(rpc);
-
-  const sendTransactionFromInstructions = sendTransactionFromInstructionsFactory(
-    rpc,
-    needsPriorityFees,
-    supportsGetPriorityFeeEstimate,
-    enableClientSideRetries,
-    sendAndConfirmTransaction,
-  );
-
-  const transferLamports = transferLamportsFactory(sendTransactionFromInstructions);
-
-  const createTokenMint = createTokenMintFactory(rpc, sendTransactionFromInstructions);
-
-  const getMint = getMintFactory(rpc);
-
-  const transferTokens = transferTokensFactory(getMint, sendTransactionFromInstructions);
-
-  const mintTokens = mintTokensFactory(sendTransactionFromInstructions);
-
-  const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
-
-  const checkTokenAccountIsClosed = checkTokenAccountIsClosedFactory(getTokenAccountBalance);
-
-  const getTokenMetadata = getTokenMetadataFactory(rpc);
-
-  const burnTokens = burnTokensFactory(getMint, sendTransactionFromInstructions);
-
-  const closeTokenAccount = closeTokenAccountFactory(sendTransactionFromInstructions);
-
-  const getLatestBlockhash = getLatestBlockhashFactory(rpc);
-
-  const checkHealth = checkHealthFactory(rpc);
-
-  const getCurrentSlot = getCurrentSlotFactory(rpc);
-
-  const getMinimumBalance = getMinimumBalanceFactory(rpc);
-
-  const getTransaction = getTransactionFactory(rpc);
-
-  const getAccountsFactory = getAccountsFactoryFactory(rpc);
-
-  return {
-    rpc,
-    rpcSubscriptions,
-    sendAndConfirmTransaction,
-    sendTransactionFromInstructions,
-    getLamportBalance: getLamportBalanceFactory(rpc),
-    watchLamportBalance: watchLamportBalanceFactory(rpc, rpcSubscriptions),
-    watchTokenBalance: watchTokenBalanceFactory(rpc, rpcSubscriptions),
-    getExplorerLink: getExplorerLinkFactory(clusterNameOrURL),
-    airdropIfRequired,
-    createWallet,
-    createWallets,
-    getLogs,
-    getRecentSignatureConfirmation,
-    transferLamports,
-    transferTokens,
-    createTokenMint,
-    mintTokens,
-    getTokenAccountAddress,
-    loadWalletFromFile,
-    loadWalletFromEnvironment,
-    getMint,
-    getTokenAccountBalance,
-    getPDAAndBump,
-    checkTokenAccountIsClosed,
-    getTokenMetadata,
-    burnTokens,
-    closeTokenAccount,
-    getLatestBlockhash,
-    checkHealth,
-    getCurrentSlot,
-    getMinimumBalance,
-    getTransaction,
-    getAccountsFactory,
-    signatureBytesToBase58String,
-    signatureBase58StringToBytes,
-    sendTransactionFromInstructionsWithWalletApp: sendTransactionFromInstructionsWithWalletAppFactory(rpc),
-    signMessageFromWalletApp,
-    checkAddressMatchesPrivateKey,
-    checkIfAddressIsPublicKey,
-  };
+  // Use the plugin to extend the RPC client
+  const plugin = createKitePlugin({ clusterNameOrURL, webSocketURL });
+  return plugin(rpc);
 };
 
 export interface Connection {
