@@ -2,6 +2,11 @@
 
 ## Upcoming release
 
+### Additions
+
+- Added Triton RPC provider support with `triton-mainnet`, `triton-devnet`, and `triton-testnet` cluster names (requires `TRITON_SOLANA_MAINNET_ENDPOINT`, `TRITON_SOLANA_DEVNET_ENDPOINT`, or `TRITON_SOLANA_TESTNET_ENDPOINT` environment variables)
+- Exported all factory functions for better tree shaking support - import only the functions you need instead of the full `connect()` API
+
 No new features for the next release yet, but add them here when you make them!
 
 ## Kite version 3.0.0

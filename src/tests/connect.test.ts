@@ -69,6 +69,25 @@ describe("connect", () => {
     delete process.env.QUICKNODE_SOLANA_MAINNET_ENDPOINT;
   });
 
+  test("connect throws an error when Triton cluster is used without environment variable", () => {
+    assert.throws(() => connect("triton-mainnet"), Error);
+  });
+
+  test("connect works with Triton when environment variable is set", () => {
+    // Set up a test endpoint that will be used for both HTTP and WebSocket
+    const testEndpoint = "https://test-app.mainnet.rpcpool.com/test-token";
+    process.env.TRITON_SOLANA_MAINNET_ENDPOINT = testEndpoint;
+
+    // Create the connection
+    const connection = connect("triton-mainnet");
+
+    // Verify the connection was created successfully
+    assert.ok(connection);
+
+    // Clean up
+    delete process.env.TRITON_SOLANA_MAINNET_ENDPOINT;
+  });
+
   describe("with RPC and RPC subscriptions clients", () => {
     test("connect accepts RPC and RPC subscriptions clients directly", () => {
       const transport = createDefaultRpcTransport({
