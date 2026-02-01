@@ -153,6 +153,55 @@ export const CLUSTERS: Record<string, ClusterConfig> = {
       needsPriorityFees: true,
     },
   },
+  // Triton RPCs
+  "triton-mainnet": {
+    // These endpoints are configured at https://triton.one/
+    // Format: https://your-app.mainnet.rpcpool.com/your-token
+    httpURL: null,
+    webSocketURL: null,
+    requiredParam: null,
+    requiredParamEnvironmentVariable: null,
+    requiredRpcEnvironmentVariable: "TRITON_SOLANA_MAINNET_ENDPOINT",
+    features: {
+      isExplorerDefault: false,
+      isNameKnownToSolanaExplorer: false,
+      supportsGetPriorityFeeEstimate: false,
+      enableClientSideRetries: true,
+      needsPriorityFees: true,
+    },
+  },
+  "triton-devnet": {
+    // These endpoints are configured at https://triton.one/
+    // Format: https://your-app.devnet.rpcpool.com/your-token
+    httpURL: null,
+    webSocketURL: null,
+    requiredParam: null,
+    requiredParamEnvironmentVariable: null,
+    requiredRpcEnvironmentVariable: "TRITON_SOLANA_DEVNET_ENDPOINT",
+    features: {
+      isExplorerDefault: false,
+      isNameKnownToSolanaExplorer: false,
+      supportsGetPriorityFeeEstimate: false,
+      enableClientSideRetries: true,
+      needsPriorityFees: true,
+    },
+  },
+  "triton-testnet": {
+    // These endpoints are configured at https://triton.one/
+    // Format: https://your-app.testnet.rpcpool.com/your-token
+    httpURL: null,
+    webSocketURL: null,
+    requiredParam: null,
+    requiredParamEnvironmentVariable: null,
+    requiredRpcEnvironmentVariable: "TRITON_SOLANA_TESTNET_ENDPOINT",
+    features: {
+      isExplorerDefault: false,
+      isNameKnownToSolanaExplorer: false,
+      supportsGetPriorityFeeEstimate: false,
+      enableClientSideRetries: true,
+      needsPriorityFees: true,
+    },
+  },
 
   // Localnet
   localnet: {

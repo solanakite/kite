@@ -3,7 +3,6 @@ import {
   createSolanaRpcFromTransport,
   createSolanaRpcSubscriptions,
   sendAndConfirmTransactionFactory,
-  KeyPairSigner,
   TransactionSendingSigner,
   Address,
   type RpcTransport,
@@ -280,6 +279,8 @@ export const createKitePlugin = (config: KitePluginConfig = {}) => {
  *                     "quicknode-mainnet", "quicknode-devnet", "quicknode-testnet"
  *                   Helius:
  *                     "helius-mainnet" or "helius-devnet" (Helius does not have testnet)
+ *                   Triton:
+ *                     "triton-mainnet", "triton-devnet", "triton-testnet"
  *                 - An HTTP URL
  *                 - A pre-configured RPC client
  * @param {string | ReturnType<typeof createSolanaRpcSubscriptions> | null} [clusterWebSocketURLOrRpcSubscriptions=null] - Either:
@@ -288,6 +289,7 @@ export const createKitePlugin = (config: KitePluginConfig = {}) => {
  * @returns {Connection} Connection object with all helper functions configured
  * @throws {Error} If using QuickNode cluster without QUICKNODE_SOLANA_MAINNET_ENDPOINT or QUICKNODE_SOLANA_DEVNET_ENDPOINT or QUICKNODE_SOLANA_TESTNET_ENDPOINT environment variable set
  * @throws {Error} If using Helius cluster without HELIUS_API_KEY environment variable set
+ * @throws {Error} If using Triton cluster without TRITON_SOLANA_MAINNET_ENDPOINT or TRITON_SOLANA_DEVNET_ENDPOINT or TRITON_SOLANA_TESTNET_ENDPOINT environment variable set
  * @throws {Error} If using custom HTTP URL without WebSocket URL
  * @throws {Error} If cluster name is invalid
  */
