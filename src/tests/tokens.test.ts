@@ -298,6 +298,83 @@ describe("tokens", () => {
       { message: "Either tokenAccount or both wallet and mint must be provided" },
     );
   });
+
+  test("getTokenAccounts returns token accounts from both classic and token extensions programs", async () => {
+    const tokenAccounts = await connection.getTokenAccounts(sender.address);
+
+    assert.ok(Array.isArray(tokenAccounts));
+    assert.ok(tokenAccounts.length >= 0);
+  });
+
+  test("getTokenAccounts returns accounts after minting tokens", async () => {
+    const testMintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals: 9,
+      name: "Get Accounts Test Token",
+      symbol: "GATT",
+      uri: "https://example.com/gatt",
+    });
+
+    await connection.mintTokens(testMintAddress, sender, 1000000000n, sender.address, true);
+
+    const tokenAccounts = await connection.getTokenAccounts(sender.address);
+
+    assert.ok(Array.isArray(tokenAccounts));
+    assert.ok(tokenAccounts.length > 0);
+
+    const hasTestToken = tokenAccounts.some((account) => {
+      const parsedInfo = account.account.data.parsed?.info;
+      return parsedInfo && parsedInfo.mint === testMintAddress;
+    });
+
+    assert.ok(hasTestToken, "Should find the test token in the accounts");
+  });
+
+  test("getTokenAccounts with excludeZeroBalance filters out empty accounts", async () => {
+    const emptyMintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals: 9,
+      name: "Empty Token",
+      symbol: "EMPTY",
+      uri: "https://example.com/empty",
+    });
+
+    await connection.mintTokens(emptyMintAddress, sender, 0n, sender.address, true);
+
+    const fullMintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals: 9,
+      name: "Full Token",
+      symbol: "FULL",
+      uri: "https://example.com/full",
+    });
+
+    await connection.mintTokens(fullMintAddress, sender, 1000000000n, sender.address, true);
+
+    const allAccounts = await connection.getTokenAccounts(sender.address, false);
+    const nonZeroAccounts = await connection.getTokenAccounts(sender.address, true);
+
+    assert.ok(allAccounts.length > nonZeroAccounts.length, "All accounts should include more accounts than filtered");
+
+    const hasEmptyInAll = allAccounts.some((account) => {
+      const parsedInfo = account.account.data.parsed?.info;
+      return parsedInfo && parsedInfo.mint === emptyMintAddress;
+    });
+
+    const hasEmptyInFiltered = nonZeroAccounts.some((account) => {
+      const parsedInfo = account.account.data.parsed?.info;
+      return parsedInfo && parsedInfo.mint === emptyMintAddress;
+    });
+
+    const hasFullInFiltered = nonZeroAccounts.some((account) => {
+      const parsedInfo = account.account.data.parsed?.info;
+      return parsedInfo && parsedInfo.mint === fullMintAddress;
+    });
+
+    assert.ok(hasEmptyInAll, "Empty account should be in all accounts");
+    assert.ok(!hasEmptyInFiltered, "Empty account should not be in filtered accounts");
+    assert.ok(hasFullInFiltered, "Full account should be in filtered accounts");
+  });
 });
 
 describe("createTokenMint", () => {

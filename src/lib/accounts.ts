@@ -53,8 +53,13 @@ export const getAccountsFactoryFactory = (rpc: ReturnType<typeof createSolanaRpc
 
       // getProgramAccounts uses one format
       // decodeAccount uses another
-      const encodedAccounts: Array<MaybeEncodedAccount> = getProgramAccountsResults.map((result: any) => {
+      type GetProgramAccountsResult = { pubkey: Address; account: Parameters<typeof parseBase64RpcAccount>[1] };
+      const encodedAccounts: Array<MaybeEncodedAccount> = getProgramAccountsResults.map((result: GetProgramAccountsResult) => {
         const account = parseBase64RpcAccount(result.pubkey, result.account);
+        // getProgramAccounts only returns existing accounts, so account.data will always exist
+        if (!account.exists) {
+          throw new Error('Unexpected: getProgramAccounts returned non-existent account');
+        }
         return {
           ...account,
           data: Uint8Array.from(account.data),

@@ -30,6 +30,7 @@ import {
   PUBLIC_KEY_SIZE,
   LENGTH_FIELD_SIZE,
 } from "./constants";
+import { ensureError } from "./errors";
 
 export const transferLamportsFactory = (
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
@@ -685,7 +686,7 @@ export const watchTokenBalanceFactory = (
   const watchTokenBalance = (
     ownerAddress: Address,
     mintAddress: Address,
-    callback: (error: any, balance: { amount: bigint; decimals: number; uiAmount: number | null; uiAmountString: string } | null) => void,
+    callback: (error: Error | null, balance: { amount: bigint; decimals: number; uiAmount: number | null; uiAmountString: string } | null) => void,
     useTokenExtensions: boolean = true
   ) => {
     const abortController = new AbortController();
@@ -746,15 +747,17 @@ export const watchTokenBalanceFactory = (
               }
             }
           }
-        } catch (error) {
+        } catch (thrownObject) {
           // Don't call callback on abort - that's expected cleanup behavior
-          if ((error as Error)?.name !== 'AbortError') {
+          const error = ensureError(thrownObject);
+          if (error.name !== 'AbortError') {
             callback(error, null);
           }
         }
-      } catch (error) {
+      } catch (thrownObject) {
         // Don't call callback on abort - that's expected cleanup behavior
-        if ((error as Error)?.name !== 'AbortError') {
+        const error = ensureError(thrownObject);
+        if (error.name !== 'AbortError') {
           callback(error, null);
         }
       }
@@ -786,7 +789,7 @@ export const watchTokenBalanceFactory = (
    * @returns Cleanup function to stop watching
    *
    * The callback receives:
-   * - error: any error that occurred (null if successful)
+   * - error: Error object if an error occurred (null if successful)
    * - balance: the token balance object with amount, decimals, uiAmount, uiAmountString (null if error)
    */
   return watchTokenBalance;
@@ -930,4 +933,46 @@ export const closeTokenAccountFactory = (
   };
 
   return closeTokenAccount;
+};
+
+export const getTokenAccountsFactory = (rpc: ReturnType<typeof createSolanaRpcFromTransport>) => {
+  const getTokenAccounts = async (walletAddress: Address, excludeZeroBalance: boolean = false) => {
+    const [classicTokenProgramResponse, tokenExtensionsProgramResponse] = await Promise.all([
+      rpc
+        .getTokenAccountsByOwner(
+          walletAddress,
+          {
+            programId: TOKEN_PROGRAM,
+          },
+          {
+            encoding: "jsonParsed",
+          },
+        )
+        .send(),
+      rpc
+        .getTokenAccountsByOwner(
+          walletAddress,
+          {
+            programId: TOKEN_EXTENSIONS_PROGRAM,
+          },
+          {
+            encoding: "jsonParsed",
+          },
+        )
+        .send(),
+    ]);
+
+    const allAccounts = [...classicTokenProgramResponse.value, ...tokenExtensionsProgramResponse.value];
+
+    if (excludeZeroBalance) {
+      return allAccounts.filter((account) => {
+        const amount = account.account.data.parsed?.info?.tokenAmount?.amount;
+        return amount && BigInt(amount) > 0n;
+      });
+    }
+
+    return allAccounts;
+  };
+
+  return getTokenAccounts;
 };

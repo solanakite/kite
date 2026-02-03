@@ -151,11 +151,18 @@ describe("watchLamportBalance", () => {
           assert.equal(balance, lamports(1n * SOL));
 
           // Now transfer some SOL to change the balance
-          connection.transferLamports({
-            source: sender,
-            destination: recipient.address,
-            amount: lamports(500_000n),
-          }).catch(() => { }); // Ignore transfer errors for this test
+          // Fire-and-forget transfer - we need this to run async without blocking the test
+          (async () => {
+            try {
+              await connection.transferLamports({
+                source: sender,
+                destination: recipient.address,
+                amount: lamports(500_000n),
+              });
+            } catch {
+              // Ignore transfer errors for this test
+            }
+          })();
         } else if (callCount === 2) {
           // Balance should have increased
           updatedBalance = balance;

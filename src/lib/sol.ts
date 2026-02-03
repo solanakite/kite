@@ -8,6 +8,16 @@ import {
 } from "@solana/kit";
 import { Connection } from "./connect";
 
+// In JS it's possible to throw *anything*. A sensible programmer
+// will only throw Errors but we must still check to satisfy
+// TypeScript (and flag any craziness)
+const ensureError = (thrownObject: unknown): Error => {
+  if (thrownObject instanceof Error) {
+    return thrownObject;
+  }
+  return new Error(`Non-Error thrown: ${String(thrownObject)}`);
+};
+
 export const getLamportBalanceFactory = (rpc: ReturnType<typeof createSolanaRpcFromTransport>) => {
   const getLamportBalance = async (address: string, commitment: Commitment = "finalized"): Promise<Lamports> => {
     const getLamportBalanceResponse = await rpc.getBalance(address, { commitment }).send();
@@ -87,7 +97,7 @@ export const watchLamportBalanceFactory = (
 ) => {
   const watchLamportBalance = (
     address: Address,
-    callback: (error: any, balance: Lamports | null) => void
+    callback: (error: Error | null, balance: Lamports | null) => void
   ) => {
     const abortController = new AbortController();
     // Keep track of the slot of the last-published update.
@@ -105,8 +115,9 @@ export const watchLamportBalanceFactory = (
         }
         lastUpdateSlot = slot;
         callback(null /* error */, lamports /* balance */);
-      } catch (error) {
-        if ((error as Error)?.name !== 'AbortError') {
+      } catch (thrownObject) {
+        const error = ensureError(thrownObject);
+        if (error.name !== 'AbortError') {
           callback(error, null);
         }
       }
@@ -130,15 +141,17 @@ export const watchLamportBalanceFactory = (
             lastUpdateSlot = slot;
             callback(null /* error */, lamports /* balance */);
           }
-        } catch (error) {
+        } catch (thrownObject) {
           // Don't call callback on abort - that's expected cleanup behavior
-          if ((error as Error)?.name !== 'AbortError') {
+          const error = ensureError(thrownObject);
+          if (error.name !== 'AbortError') {
             callback(error, null);
           }
         }
-      } catch (error) {
+      } catch (thrownObject) {
         // Don't call callback on abort - that's expected cleanup behavior
-        if ((error as Error)?.name !== 'AbortError') {
+        const error = ensureError(thrownObject);
+        if (error.name !== 'AbortError') {
           callback(error, null);
         }
       }
@@ -167,8 +180,8 @@ export const watchLamportBalanceFactory = (
    * @returns Cleanup function to stop watching
    *
    * The callback receives:
-   * - error: any error that occurred (null if successful)
-   * - balance: the new lamport balance (undefined if error)
+   * - error: Error object if an error occurred (null if successful)
+   * - balance: the new lamport balance (null if error)
    *
    * At all points in time, check that the update you received -- no matter from where -- is from a
    * higher slot (ie. is newer) than the last one you published to the consumer.

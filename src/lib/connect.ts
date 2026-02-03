@@ -35,6 +35,7 @@ import {
   getTokenMetadataFactory,
   burnTokensFactory,
   closeTokenAccountFactory,
+  getTokenAccountsFactory,
 } from "./tokens";
 import { getLogsFactory } from "./logs";
 import { getExplorerLinkFactory } from "./explorer";
@@ -221,6 +222,7 @@ export const createKitePlugin = (config: KitePluginConfig = {}) => {
     const getMinimumBalance = getMinimumBalanceFactory(rpc);
     const getTransaction = getTransactionFactory(rpc);
     const getAccountsFactory = getAccountsFactoryFactory(rpc);
+    const getTokenAccounts = getTokenAccountsFactory(rpc);
 
     return {
       ...rpc,
@@ -257,6 +259,7 @@ export const createKitePlugin = (config: KitePluginConfig = {}) => {
       getMinimumBalance,
       getTransaction,
       getAccountsFactory,
+      getTokenAccounts,
       signatureBytesToBase58String,
       signatureBase58StringToBytes,
       sendTransactionFromInstructionsWithWalletApp: sendTransactionFromInstructionsWithWalletAppFactory(rpc),
@@ -348,6 +351,7 @@ export const connect = (
     const getMinimumBalance = getMinimumBalanceFactory(rpc);
     const getTransaction = getTransactionFactory(rpc);
     const getAccountsFactory = getAccountsFactoryFactory(rpc);
+    const getTokenAccounts = getTokenAccountsFactory(rpc);
 
     return {
       rpc,
@@ -383,6 +387,7 @@ export const connect = (
       getMinimumBalance,
       getTransaction,
       getAccountsFactory,
+      getTokenAccounts,
       signatureBytesToBase58String,
       signatureBase58StringToBytes,
       sendTransactionFromInstructionsWithWalletApp: sendTransactionFromInstructionsWithWalletAppFactory(rpc),
@@ -486,7 +491,7 @@ export interface Connection {
   /**
    * Watches for changes to a Solana account's lamport balance.
    * @param {Address} address - The Solana address to watch
-   * @param {(error: any, balance: Lamports | null) => void} callback - Called with (error, balance) on each balance change
+   * @param {(error: Error | null, balance: Lamports | null) => void} callback - Called with (error, balance) on each balance change
    * @returns {() => void} Cleanup function to stop watching
    */
   watchLamportBalance: ReturnType<typeof watchLamportBalanceFactory>;
@@ -495,7 +500,7 @@ export interface Connection {
    * Watches for changes to a token balance.
    * @param {Address} ownerAddress - The wallet address that owns the tokens
    * @param {Address} mintAddress - The token mint address
-   * @param {(error: any, balance: object | null) => void} callback - Called with (error, balance) on each balance change
+   * @param {(error: Error | null, balance: object | null) => void} callback - Called with (error, balance) on each balance change
    * @returns {Promise<() => void>} Cleanup function to stop watching
    */
   watchTokenBalance: ReturnType<typeof watchTokenBalanceFactory>;
@@ -718,6 +723,15 @@ export interface Connection {
    * Creates a factory function for getting program accounts with a specific discriminator.
    */
   getAccountsFactory: ReturnType<typeof getAccountsFactoryFactory>;
+
+  /**
+   * Gets all token accounts owned by a wallet address.
+   * Queries both the classic SPL Token program and Token Extensions program.
+   * @param {Address} walletAddress - The wallet address to get token accounts for
+   * @param {boolean} [excludeZeroBalance=false] - If true, only returns accounts with balance > 0
+   * @returns {Promise<Array>} All token accounts from both programs
+   */
+  getTokenAccounts: ReturnType<typeof getTokenAccountsFactory>;
 
   /**
    * Converts signature bytes to a base58 string.
