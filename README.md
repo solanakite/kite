@@ -1,6 +1,8 @@
 # Kite: the modern TypeScript client for Solana Kit 🪁
 
-Kite [requires less code than every other Solana client](https://github.com/solanakite/solana-typescript-library-comparison?tab=readme-ov-file#results), including Framework Kit, Gill and web3.js.
+Kite is the oldest, most documented and most developer-efficient client for Solana Kit, [requiring significantly less code than every other Solana client](https://github.com/solanakite/solana-typescript-library-comparison?tab=readme-ov-file#results), including Framework Kit, Gill and web3.js.
+
+Using AI? You'll want to check out this [Solana Anchor Claude Skill](https://github.com/mikemaccana/solana-anchor-claude-skill) for working with Kite.
 
 [![Tests](https://github.com/solanakite/kite/actions/workflows/tests.yaml/badge.svg)](https://github.com/solanakite/kite/actions/workflows/tests.yaml)
 
@@ -15,9 +17,9 @@ Kite [requires less code than every other Solana client](https://github.com/sola
 ## Quick Start
 
 ```typescript
-import { connect } from 'solana-kite';
+import { connect } from "solana-kite";
 
-const connection = connect('devnet');
+const connection = connect("devnet");
 const wallet = await connection.createWallet();
 ```
 
@@ -26,12 +28,12 @@ const wallet = await connection.createWallet();
 Kite can now be used as a Solana Kit plugin, allowing composition with other plugins:
 
 ```typescript
-import { createSolanaRpc, createDefaultRpcTransport } from '@solana/kit';
-import { createKitePlugin } from 'solana-kite';
+import { createSolanaRpc, createDefaultRpcTransport } from "@solana/kit";
+import { createKitePlugin } from "solana-kite";
 
-const transport = createDefaultRpcTransport({ url: 'https://api.devnet.solana.com' });
+const transport = createDefaultRpcTransport({ url: "https://api.devnet.solana.com" });
 const rpc = createSolanaRpc(transport);
-const connection = rpc.use(createKitePlugin({ clusterNameOrURL: 'devnet' }));
+const connection = rpc.use(createKitePlugin({ clusterNameOrURL: "devnet" }));
 ```
 
 Both approaches provide the same functionality. The `connect()` convenience function is a drop-in replacement for Kite 2.x projects.
