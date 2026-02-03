@@ -10,6 +10,7 @@ export {
   getTokenAccountAddress,
   createTokenMintFactory,
   mintTokensFactory,
+  transferLamportsFactory,
   transferTokensFactory,
   getTokenAccountBalanceFactory,
   checkTokenAccountIsClosedFactory,
@@ -17,6 +18,7 @@ export {
   burnTokensFactory,
   closeTokenAccountFactory,
   watchTokenBalanceFactory,
+  getTokenAccountsFactory,
 } from "./lib/tokens";
 export { getLogsFactory } from "./lib/logs";
 export { getExplorerLinkFactory } from "./lib/explorer";

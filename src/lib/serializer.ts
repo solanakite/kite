@@ -1,7 +1,7 @@
 export const log = console.log;
 
 // See https://stackoverflow.com/questions/65152373/typescript-serialize-bigint-in-json
-function bigIntReplacer(key: string, value: any): any {
+function bigIntReplacer(key: string, value: unknown): unknown {
   if (typeof value === "bigint") {
     return value.toString() + "n";
   }
@@ -9,4 +9,4 @@ function bigIntReplacer(key: string, value: any): any {
 }
 
 // Sometimes we need to show a bigInt value as JSON
-export const stringify = (any: any) => JSON.stringify(any, bigIntReplacer, 2);
+export const stringify = (value: unknown) => JSON.stringify(value, bigIntReplacer, 2);
