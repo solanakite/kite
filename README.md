@@ -1,6 +1,6 @@
 # Kite: the modern TypeScript client for Solana Kit 🪁
 
-Kite uses smart defaults that require less code than every other Solana client, including Framework Kit, Gill and web3.js.
+Kite [requires less code than every other Solana client](https://github.com/solanakite/solana-typescript-library-comparison?tab=readme-ov-file#results), including Framework Kit, Gill and web3.js.
 
 [![Tests](https://github.com/solanakite/kite/actions/workflows/tests.yaml/badge.svg)](https://github.com/solanakite/kite/actions/workflows/tests.yaml)
 
