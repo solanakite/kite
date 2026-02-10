@@ -92,7 +92,7 @@ export const sendTransactionFromInstructionsFactory = (
     abortSignal = null,
     timeout,
   }: {
-    feePayer: TransactionSendingSigner;
+    feePayer: TransactionSigner;
     instructions: Array<Instruction>;
     commitment?: Commitment;
     skipPreflight?: boolean;
