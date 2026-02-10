@@ -667,6 +667,127 @@ export const getTokenMetadataFactory = (rpc: ReturnType<typeof createSolanaRpcFr
 };
 
 /**
+ * Creates a function to update Token-2022 metadata fields.
+ * @param rpc - The Solana RPC client for making API calls
+ * @param sendTransactionFromInstructions - Function to send transactions
+ * @returns Function to update token metadata
+ */
+export const updateTokenMetadataFactory = (
+  rpc: ReturnType<typeof createSolanaRpcFromTransport>,
+  sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
+) => {
+  const updateTokenMetadata = async ({
+    mintAddress,
+    updateAuthority,
+    name,
+    symbol,
+    uri,
+    additionalMetadata,
+    commitment = "confirmed",
+  }: {
+    mintAddress: Address;
+    updateAuthority: TransactionSendingSigner;
+    name?: string;
+    symbol?: string;
+    uri?: string;
+    additionalMetadata?: Record<string, string>;
+    commitment?: Commitment;
+  }) => {
+    // Fetch the mint to determine metadata address
+    const mint = await fetchMint(rpc, mintAddress, { commitment });
+
+    if (!mint) {
+      throw new Error(`Mint not found: ${mintAddress}`);
+    }
+
+    // Extract extensions from the mint account data
+    const extensions = mint.data?.extensions?.__option === "Some" ? mint.data.extensions.value : [];
+
+    // Find the metadata pointer extension
+    const metadataPointerExtension = extensions.find((extension: Extension) => extension.__kind === "MetadataPointer");
+
+    if (!metadataPointerExtension || metadataPointerExtension.metadataAddress.__option === "None") {
+      throw new Error(`No metadata pointer extension found for mint: ${mintAddress}`);
+    }
+
+    // Get the metadata address from the extension
+    const metadataAddress =
+      metadataPointerExtension.metadataAddress?.__option === "Some"
+        ? metadataPointerExtension.metadataAddress.value
+        : null;
+
+    if (!metadataAddress) {
+      throw new Error(`No metadata address found in metadata pointer extension for mint: ${mintAddress}`);
+    }
+
+    // Build update instructions for each field
+    const instructions = [];
+
+    if (name !== undefined) {
+      instructions.push(
+        getUpdateTokenMetadataFieldInstruction({
+          metadata: metadataAddress,
+          updateAuthority,
+          field: tokenMetadataField("Name"),
+          value: name,
+        }),
+      );
+    }
+
+    if (symbol !== undefined) {
+      instructions.push(
+        getUpdateTokenMetadataFieldInstruction({
+          metadata: metadataAddress,
+          updateAuthority,
+          field: tokenMetadataField("Symbol"),
+          value: symbol,
+        }),
+      );
+    }
+
+    if (uri !== undefined) {
+      instructions.push(
+        getUpdateTokenMetadataFieldInstruction({
+          metadata: metadataAddress,
+          updateAuthority,
+          field: tokenMetadataField("Uri"),
+          value: uri,
+        }),
+      );
+    }
+
+    // Handle additional metadata updates
+    if (additionalMetadata) {
+      for (const [key, value] of Object.entries(additionalMetadata)) {
+        instructions.push(
+          getUpdateTokenMetadataFieldInstruction({
+            metadata: metadataAddress,
+            updateAuthority,
+            field: tokenMetadataField("Key", [key]),
+            value: value,
+          }),
+        );
+      }
+    }
+
+    if (instructions.length === 0) {
+      throw new Error("No metadata fields provided to update");
+    }
+
+    // Send transaction with all update instructions
+    const signature = await sendTransactionFromInstructions({
+      feePayer: updateAuthority,
+      instructions,
+      commitment,
+    });
+
+    return signature;
+  };
+
+  return updateTokenMetadata;
+};
+
+/**
  * Creates a function to watch for changes to a token balance.
  * @param rpc - The Solana RPC client for making API calls
  * @param rpcSubscriptions - The WebSocket client for real-time subscriptions

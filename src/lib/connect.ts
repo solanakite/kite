@@ -33,6 +33,7 @@ import {
   getTokenAccountBalanceFactory,
   checkTokenAccountIsClosedFactory,
   getTokenMetadataFactory,
+  updateTokenMetadataFactory,
   burnTokensFactory,
   closeTokenAccountFactory,
   getTokenAccountsFactory,
@@ -214,6 +215,7 @@ export const createKitePlugin = (config: KitePluginConfig = {}) => {
     const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
     const checkTokenAccountIsClosed = checkTokenAccountIsClosedFactory(getTokenAccountBalance);
     const getTokenMetadata = getTokenMetadataFactory(rpc);
+    const updateTokenMetadata = updateTokenMetadataFactory(rpc, sendTransactionFromInstructions);
     const burnTokens = burnTokensFactory(getMint, sendTransactionFromInstructions);
     const closeTokenAccount = closeTokenAccountFactory(sendTransactionFromInstructions);
     const getLatestBlockhash = getLatestBlockhashFactory(rpc);
@@ -251,6 +253,7 @@ export const createKitePlugin = (config: KitePluginConfig = {}) => {
       getPDAAndBump,
       checkTokenAccountIsClosed,
       getTokenMetadata,
+      updateTokenMetadata,
       burnTokens,
       closeTokenAccount,
       getLatestBlockhash,
@@ -343,6 +346,7 @@ export const connect = (
     const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
     const checkTokenAccountIsClosed = checkTokenAccountIsClosedFactory(getTokenAccountBalance);
     const getTokenMetadata = getTokenMetadataFactory(rpc);
+    const updateTokenMetadata = updateTokenMetadataFactory(rpc, sendTransactionFromInstructions);
     const burnTokens = burnTokensFactory(getMint, sendTransactionFromInstructions);
     const closeTokenAccount = closeTokenAccountFactory(sendTransactionFromInstructions);
     const getLatestBlockhash = getLatestBlockhashFactory(rpc);
@@ -379,6 +383,7 @@ export const connect = (
       getPDAAndBump,
       checkTokenAccountIsClosed,
       getTokenMetadata,
+      updateTokenMetadata,
       burnTokens,
       closeTokenAccount,
       getLatestBlockhash,
@@ -543,6 +548,20 @@ export interface Connection {
    * @returns {Promise<Object>} The token metadata including name, symbol, uri, and additional metadata
    */
   getTokenMetadata: ReturnType<typeof getTokenMetadataFactory>;
+
+  /**
+   * Updates Token-2022 metadata fields.
+   * @param {Object} params - Parameters for updating metadata
+   * @param {Address} params.mintAddress - The token mint address
+   * @param {TransactionSendingSigner} params.updateAuthority - The update authority signer
+   * @param {string} [params.name] - New token name
+   * @param {string} [params.symbol] - New token symbol
+   * @param {string} [params.uri] - New metadata URI
+   * @param {Record<string, string>} [params.additionalMetadata] - Additional metadata key-value pairs
+   * @param {Commitment} [params.commitment="confirmed"] - Confirmation level to wait for
+   * @returns {Promise<string>} Transaction signature
+   */
+  updateTokenMetadata: ReturnType<typeof updateTokenMetadataFactory>;
 
   /**
    * Requests free test SOL from a faucet if an account's balance is too low.

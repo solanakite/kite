@@ -719,3 +719,152 @@ describe("watchTokenBalance", () => {
     });
   });
 });
+
+describe("updateTokenMetadata", () => {
+  let connection: Connection;
+  let updateAuthority: KeyPairSigner & TransactionSendingSigner;
+  let mintAddress: Address;
+
+  before(async () => {
+    connection = connect();
+    updateAuthority = await connection.createWallet({
+      airdropAmount: lamports(2n * SOL),
+      commitment: "processed",
+    });
+
+    mintAddress = await connection.createTokenMint({
+      mintAuthority: updateAuthority,
+      decimals: 9,
+      name: "Original Name",
+      symbol: "ORIG",
+      uri: "https://original.com",
+      additionalMetadata: {
+        originalKey: "originalValue",
+      },
+    });
+  });
+
+  test("updates token name", async () => {
+    const signature = await connection.updateTokenMetadata({
+      mintAddress,
+      updateAuthority,
+      name: "Updated Name",
+    });
+
+    assert.ok(signature);
+
+    const metadata = await connection.getTokenMetadata(mintAddress);
+    assert.strictEqual(metadata.name, "Updated Name");
+  });
+
+  test("updates token symbol", async () => {
+    const signature = await connection.updateTokenMetadata({
+      mintAddress,
+      updateAuthority,
+      symbol: "UPDT",
+    });
+
+    assert.ok(signature);
+
+    const metadata = await connection.getTokenMetadata(mintAddress);
+    assert.strictEqual(metadata.symbol, "UPDT");
+  });
+
+  test("updates token URI", async () => {
+    const signature = await connection.updateTokenMetadata({
+      mintAddress,
+      updateAuthority,
+      uri: "https://updated.com",
+    });
+
+    assert.ok(signature);
+
+    const metadata = await connection.getTokenMetadata(mintAddress);
+    assert.strictEqual(metadata.uri, "https://updated.com");
+  });
+
+  test("updates multiple fields at once", async () => {
+    const signature = await connection.updateTokenMetadata({
+      mintAddress,
+      updateAuthority,
+      name: "Multi Update Name",
+      symbol: "MULTI",
+      uri: "https://multi.com",
+    });
+
+    assert.ok(signature);
+
+    const metadata = await connection.getTokenMetadata(mintAddress);
+    assert.strictEqual(metadata.name, "Multi Update Name");
+    assert.strictEqual(metadata.symbol, "MULTI");
+    assert.strictEqual(metadata.uri, "https://multi.com");
+  });
+
+  test("updates additional metadata field", async () => {
+    const signature = await connection.updateTokenMetadata({
+      mintAddress,
+      updateAuthority,
+      additionalMetadata: {
+        newKey: "newValue",
+      },
+    });
+
+    assert.ok(signature);
+
+    const metadata = await connection.getTokenMetadata(mintAddress);
+    assert.ok(metadata.additionalMetadata);
+    assert.strictEqual(metadata.additionalMetadata.newKey, "newValue");
+  });
+
+  test("throws error when no fields provided", async () => {
+    await assert.rejects(
+      async () => {
+        await connection.updateTokenMetadata({
+          mintAddress,
+          updateAuthority,
+        });
+      },
+      {
+        message: /No metadata fields provided to update/,
+      },
+    );
+  });
+
+  test("throws error when mint not found", async () => {
+    const nonExistentMint = toAddress("11111111111111111111111111111112");
+
+    await assert.rejects(
+      async () => {
+        await connection.updateTokenMetadata({
+          mintAddress: nonExistentMint,
+          updateAuthority,
+          name: "Test",
+        });
+      },
+      {
+        message: /Mint not found/,
+      },
+    );
+  });
+
+  test("throws error when mint has no metadata pointer extension", async () => {
+    const classicMint = await connection.createTokenMint({
+      mintAuthority: updateAuthority,
+      decimals: 9,
+      useTokenExtensions: false,
+    });
+
+    await assert.rejects(
+      async () => {
+        await connection.updateTokenMetadata({
+          mintAddress: classicMint,
+          updateAuthority,
+          name: "Test",
+        });
+      },
+      {
+        message: /No metadata pointer extension found/,
+      },
+    );
+  });
+});
