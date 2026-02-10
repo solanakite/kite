@@ -4,6 +4,16 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 3.2.0
+
+### Additions
+
+- Added `updateTokenMetadata()` function to update Token-2022 metadata fields including name, symbol, uri, and additionalMetadata
+
+### Fixes
+
+- Fixed `sendTransactionFromInstructions` feePayer parameter to correctly accept `TransactionSigner` instead of `TransactionSendingSigner` for better type compatibility
+
 ## Kite version 3.1.0
 
 ### Additions
