@@ -18,9 +18,18 @@ describe("tokens", () => {
       airdropAmount: lamports(1n * SOL),
       commitment: "processed",
     });
+
+    // Create a basic mint without metadata for tests that need a mint
+    // Token-2022 metadata tests are skipped due to test validator issue
+    mintAddress = await connection.createTokenMint({
+      mintAuthority: sender,
+      decimals,
+      useTokenExtensions: false,
+    });
   });
 
-  test("We can make a new token mint with one additional metadata field", async () => {
+  // TODO: https://github.com/anza-xyz/agave/issues/9799
+  test.skip("We can make a new token mint with one additional metadata field", async () => {
     mintAddress = await connection.createTokenMint({
       mintAuthority: sender,
       decimals,
@@ -34,7 +43,8 @@ describe("tokens", () => {
     assert.ok(mintAddress);
   });
 
-  test("We can make a new token mint with two additional metadata fields", async () => {
+  // TODO: https://github.com/anza-xyz/agave/issues/9799
+  test.skip("We can make a new token mint with two additional metadata fields", async () => {
     mintAddress = await connection.createTokenMint({
       mintAuthority: sender,
       decimals,
@@ -49,7 +59,8 @@ describe("tokens", () => {
     assert.ok(mintAddress);
   });
 
-  test("We can make a new token mint without additional metadata", async () => {
+  // TODO: https://github.com/anza-xyz/agave/issues/9799
+  test.skip("We can make a new token mint without additional metadata", async () => {
     mintAddress = await connection.createTokenMint({
       mintAuthority: sender,
       decimals,
@@ -720,7 +731,8 @@ describe("watchTokenBalance", () => {
   });
 });
 
-describe("updateTokenMetadata", () => {
+// TODO: https://github.com/anza-xyz/agave/issues/9799
+describe.skip("updateTokenMetadata", () => {
   let connection: Connection;
   let updateAuthority: KeyPairSigner & TransactionSendingSigner;
   let mintAddress: Address;
