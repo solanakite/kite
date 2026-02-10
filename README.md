@@ -8,7 +8,7 @@ Using AI? You'll want to check out this [Solana Anchor Claude Skill](https://git
 
 ## Features
 
-- **Write half the code of alternatives** - Clean, intuitive APIs mean less boilerplate and fewer bugs in your production apps
+- **Write [half the code of alternatives](https://github.com/solanakite/solana-typescript-library-comparison?tab=readme-ov-file#results)** - Clean, intuitive APIs mean less boilerplate and fewer bugs in your production apps
 - **Ship faster with single-line operations** - Create funded wallets, send tokens, create tokens, and make arbitrary transactions without the boilerplate of lower-level clients
 - **5 example projects and 6+ video tutorials and hand written editor docs** show you how to build production-ready Solana apps
 - **Never get locked in** - Built on Solana Kit with identical types, so you can drop down to `connection.rpc` whenever you need full control
