@@ -1,4 +1,12 @@
-import { Account, Commitment, createSolanaRpcSubscriptions, generateKeyPairSigner, isSolanaError, Lamports, some } from "@solana/kit";
+import {
+  Account,
+  Commitment,
+  createSolanaRpcSubscriptions,
+  generateKeyPairSigner,
+  isSolanaError,
+  Lamports,
+  some,
+} from "@solana/kit";
 import { Address } from "@solana/kit";
 import {
   // This is badly named. It's a function that returns an object.
@@ -219,7 +227,7 @@ const createClassicTokenMint = async ({
 /**
  * Creates a Token Extensions (Token-2022) mint with metadata
  */
-const createToken22Mint = async ({
+const createTokenExtensionsMint = async ({
   rpc,
   sendTransactionFromInstructions,
   mintAuthority,
@@ -376,28 +384,28 @@ export const createTokenMintFactory = (
     additionalMetadata?: Record<string, string> | Map<string, string>;
     useTokenExtensions?: boolean;
   }) => {
-    if (!useTokenExtensions) {
-      return createClassicTokenMint({
+    if (useTokenExtensions) {
+      if (!name || !symbol || !uri) {
+        throw new Error("name, symbol, and uri are required when useTokenExtensions is true");
+      }
+
+      return createTokenExtensionsMint({
         rpc,
         sendTransactionFromInstructions,
         mintAuthority,
         decimals,
+        name,
+        symbol,
+        uri,
+        additionalMetadata,
       });
     }
 
-    if (!name || !symbol || !uri) {
-      throw new Error("name, symbol, and uri are required when useTokenExtensions is true");
-    }
-
-    return createToken22Mint({
+    return createClassicTokenMint({
       rpc,
       sendTransactionFromInstructions,
       mintAuthority,
       decimals,
-      name,
-      symbol,
-      uri,
-      additionalMetadata,
     });
   };
 
@@ -795,7 +803,7 @@ export const updateTokenMetadataFactory = (
  */
 export const watchTokenBalanceFactory = (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
-  rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>
+  rpcSubscriptions: ReturnType<typeof createSolanaRpcSubscriptions>,
 ) => {
   const getTokenAccountBalance = getTokenAccountBalanceFactory(rpc);
 
@@ -807,8 +815,11 @@ export const watchTokenBalanceFactory = (
   const watchTokenBalance = (
     ownerAddress: Address,
     mintAddress: Address,
-    callback: (error: Error | null, balance: { amount: bigint; decimals: number; uiAmount: number | null; uiAmountString: string } | null) => void,
-    useTokenExtensions: boolean = true
+    callback: (
+      error: Error | null,
+      balance: { amount: bigint; decimals: number; uiAmount: number | null; uiAmountString: string } | null,
+    ) => void,
+    useTokenExtensions: boolean = true,
   ) => {
     const abortController = new AbortController();
     let lastUpdateSlot = -1n;
@@ -823,7 +834,7 @@ export const watchTokenBalanceFactory = (
         callback(null /* error */, balance);
       } catch (error) {
         // If account doesn't exist yet, return zero balance
-        if ((error as Error)?.name !== 'AbortError') {
+        if ((error as Error)?.name !== "AbortError") {
           callback(null /* error */, {
             amount: 0n,
             decimals: 9,
@@ -858,7 +869,7 @@ export const watchTokenBalanceFactory = (
               });
               callback(null /* error */, balance);
             } catch (balanceError) {
-              if ((balanceError as Error)?.name !== 'AbortError') {
+              if ((balanceError as Error)?.name !== "AbortError") {
                 callback(null /* error */, {
                   amount: 0n,
                   decimals: 9,
@@ -871,14 +882,14 @@ export const watchTokenBalanceFactory = (
         } catch (thrownObject) {
           // Don't call callback on abort - that's expected cleanup behavior
           const error = ensureError(thrownObject);
-          if (error.name !== 'AbortError') {
+          if (error.name !== "AbortError") {
             callback(error, null);
           }
         }
       } catch (thrownObject) {
         // Don't call callback on abort - that's expected cleanup behavior
         const error = ensureError(thrownObject);
-        if (error.name !== 'AbortError') {
+        if (error.name !== "AbortError") {
           callback(error, null);
         }
       }
