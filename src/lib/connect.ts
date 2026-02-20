@@ -3,7 +3,7 @@ import {
   createSolanaRpcFromTransport,
   createSolanaRpcSubscriptions,
   sendAndConfirmTransactionFactory,
-  TransactionSendingSigner,
+  TransactionSigner,
   Address,
   type RpcTransport,
   SolanaRpcSubscriptionsApi,
@@ -468,7 +468,7 @@ export interface Connection {
   /**
    * Builds, signs and sends a transaction containing multiple instructions.
    * @param {Object} params - Transaction parameters
-   * @param {TransactionSendingSigner} params.feePayer - Account that will pay the transaction fees
+   * @param {TransactionSigner} params.feePayer - Account that will pay the transaction fees
    * @param {Array<Instruction>} params.instructions - List of instructions to execute in sequence
    * @param {Commitment} [params.commitment="confirmed"] - Confirmation level to wait for:
    *                                                      'processed' = processed by current node,
@@ -553,7 +553,7 @@ export interface Connection {
    * Updates Token-2022 metadata fields.
    * @param {Object} params - Parameters for updating metadata
    * @param {Address} params.mintAddress - The token mint address
-   * @param {TransactionSendingSigner} params.updateAuthority - The update authority signer
+   * @param {TransactionSigner} params.updateAuthority - The update authority signer
    * @param {string} [params.name] - New token name
    * @param {string} [params.symbol] - New token symbol
    * @param {string} [params.uri] - New metadata URI
@@ -585,7 +585,7 @@ export interface Connection {
    * @param {string | null} [options.envFileName] - Save private key to this .env file
    * @param {string} [options.envVariableName] - Environment variable name to store the key
    * @param {Lamports | null} [options.airdropAmount] - Amount of test SOL to request from faucet
-   * @returns {Promise<KeyPairSigner>} The new wallet, ready to use
+   * @returns {Promise<TransactionSigner>} The new wallet, ready to use
    */
   createWallet: ReturnType<typeof createWalletFactory>;
 
@@ -593,7 +593,7 @@ export interface Connection {
    * Creates multiple Solana wallets in parallel with identical configuration.
    * @param {number} amount - How many wallets to create
    * @param {Object} options - Same configuration options as createWallet
-   * @returns {Promise<Array<KeyPairSigner>>} Array of new wallets
+   * @returns {Promise<Array<TransactionSigner>>} Array of new wallets
    */
   createWallets: ReturnType<typeof createWalletsFactory>;
 
@@ -608,7 +608,7 @@ export interface Connection {
   /**
    * Transfers SOL from one account to another.
    * @param {Object} params - Transfer details
-   * @param {TransactionSendingSigner} params.source - Account sending the SOL (must sign)
+   * @param {TransactionSigner} params.source - Account sending the SOL (must sign)
    * @param {Address} params.destination - Account receiving the SOL
    * @param {Lamports} params.amount - Amount of SOL to send (in lamports)
    * @param {boolean} [params.skipPreflight=true] - Skip pre-flight checks to reduce latency
@@ -621,7 +621,7 @@ export interface Connection {
   /**
    * Creates a new SPL token with metadata and minting controls.
    * @param {Object} params - Token configuration
-   * @param {TransactionSendingSigner} params.mintAuthority - Account that will have permission to mint tokens
+   * @param {TransactionSigner} params.mintAuthority - Account that will have permission to mint tokens
    * @param {number} params.decimals - Number of decimal places (e.g. 9 decimals means 1 token = 1,000,000,000 base units)
    * @param {string} params.name - Display name of the token
    * @param {string} params.symbol - Short ticker symbol (e.g. "USDC")
@@ -630,7 +630,7 @@ export interface Connection {
    * @returns {Promise<Address>} Address of the new token mint
    */
   createTokenMint: (params: {
-    mintAuthority: TransactionSendingSigner;
+    mintAuthority: TransactionSigner;
     decimals: number;
     name?: string;
     symbol?: string;
@@ -642,7 +642,7 @@ export interface Connection {
   /**
    * Creates new tokens from a token mint.
    * @param {Address} mintAddress - The token mint to create tokens from
-   * @param {TransactionSendingSigner} mintAuthority - Account authorized to mint new tokens (must sign)
+   * @param {TransactionSigner} mintAuthority - Account authorized to mint new tokens (must sign)
    * @param {bigint} amount - Number of base units to mint (adjusted for decimals)
    * @param {Address} destination - Account to receive the new tokens
    * @param {boolean} [useTokenExtensions=true] - Use Token Extensions program instead of classic Token program
@@ -650,7 +650,7 @@ export interface Connection {
    */
   mintTokens: (
     mintAddress: Address,
-    mintAuthority: TransactionSendingSigner,
+    mintAuthority: TransactionSigner,
     amount: bigint,
     destination: Address,
     useTokenExtensions?: boolean,
@@ -659,7 +659,7 @@ export interface Connection {
   /**
    * Transfers SPL tokens between accounts.
    * @param {Object} params - Transfer details
-   * @param {TransactionSendingSigner} params.sender - Account sending the tokens (must sign)
+   * @param {TransactionSigner} params.sender - Account sending the tokens (must sign)
    * @param {Address} params.destination - Account receiving the tokens
    * @param {Address} params.mintAddress - The type of token to transfer
    * @param {bigint} params.amount - Number of base units to transfer (adjusted for decimals)
@@ -717,7 +717,7 @@ export interface Connection {
    * Loads a wallet from a file containing a keypair.
    * Compatible with keypair files generated by 'solana-keygen'.
    * @param {string} [filepath] - Location of the keypair file (defaults to ~/.config/solana/id.json)
-   * @returns {Promise<KeyPairSigner>} The loaded wallet
+   * @returns {Promise<TransactionSigner>} The loaded wallet
    */
   loadWalletFromFile: typeof loadWalletFromFile;
 
@@ -725,7 +725,7 @@ export interface Connection {
    * Loads a wallet from an environment variable containing a keypair.
    * The keypair must be in the same format as 'solana-keygen' (array of numbers).
    * @param {string} variableName - Name of environment variable storing the keypair
-   * @returns {KeyPairSigner} The loaded wallet
+   * @returns {TransactionSigner} The loaded wallet
    */
   loadWalletFromEnvironment: typeof loadWalletFromEnvironment;
 
@@ -769,7 +769,7 @@ export interface Connection {
   /**
    * Builds, signs and sends a transaction containing multiple instructions using a wallet app.
    * @param {Object} params - Transaction parameters
-   * @param {TransactionSendingSigner} params.feePayer - Account that will pay the transaction fees
+   * @param {TransactionSigner} params.feePayer - Account that will pay the transaction fees
    * @param {Array<Instruction>} params.instructions - List of instructions to execute in sequence
    * @param {AbortSignal | null} [params.abortSignal=null] - Signal to cancel the transaction
    * @returns {Promise<string>} The transaction signature

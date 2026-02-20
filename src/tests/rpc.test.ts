@@ -2,12 +2,12 @@ import { describe, test, before } from "node:test";
 import assert from "node:assert";
 import { connect } from "..";
 import { Connection } from "../lib/connect";
-import { KeyPairSigner, lamports, TransactionSendingSigner } from "@solana/kit";
+import { KeyPairSigner, lamports, TransactionSigner } from "@solana/kit";
 import { SOL } from "../lib/constants";
 
 describe("rpc", () => {
   let connection: Connection;
-  let wallet: KeyPairSigner & TransactionSendingSigner;
+  let wallet: TransactionSigner;
 
   before(async () => {
     connection = connect();

@@ -1,16 +1,16 @@
 import { before, describe, test } from "node:test";
 import assert from "node:assert";
 import { connect } from "..";
-import { KeyPairSigner, lamports, Address, address as toAddress, TransactionSendingSigner } from "@solana/kit";
+import { lamports, Address, address as toAddress, TransactionSigner } from "@solana/kit";
 import { SOL, TOKEN_PROGRAM } from "../lib/constants";
 import { Connection } from "../lib/connect";
 import { fetchMint } from "@solana-program/token";
 
 describe("tokens", () => {
   let connection: Connection;
-  let sender: KeyPairSigner & TransactionSendingSigner;
+  let sender: TransactionSigner;
   let mintAddress: Address;
-  let recipient: KeyPairSigner & TransactionSendingSigner;
+  let recipient: TransactionSigner;
   const decimals = 9;
   before(async () => {
     connection = connect();
@@ -476,9 +476,9 @@ describe("getTokenMetadata", () => {
 
 describe("classic token program", () => {
   let connection: Connection;
-  let sender: KeyPairSigner & TransactionSendingSigner;
+  let sender: TransactionSigner;
   let mintAddress: Address;
-  let recipient: KeyPairSigner & TransactionSendingSigner;
+  let recipient: TransactionSigner;
   const decimals = 9;
   before(async () => {
     connection = connect();
@@ -734,7 +734,7 @@ describe("watchTokenBalance", () => {
 // TODO: https://github.com/anza-xyz/agave/issues/9799
 describe.skip("updateTokenMetadata", () => {
   let connection: Connection;
-  let updateAuthority: KeyPairSigner & TransactionSendingSigner;
+  let updateAuthority: TransactionSigner;
   let mintAddress: Address;
 
   before(async () => {

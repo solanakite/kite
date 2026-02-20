@@ -3,7 +3,7 @@ import {
   KeyPairSigner,
   Address,
   createKeyPairSignerFromPrivateKeyBytes,
-  TransactionSendingSigner,
+  TransactionSigner,
 } from "@solana/kit";
 import { assertKeyGenerationIsAvailable } from "@solana/assertions";
 import { exportRawPrivateKeyBytes, exportRawPublicKeyBytes, getBase58AddressFromPublicKey } from "./crypto";
@@ -107,9 +107,9 @@ export const createJSONFromKeyPairSigner = async (keyPairSigner: KeyPairSigner):
 /**
  * Loads a wallet (KeyPairSigner) from a file. The file should be in the same format as files created by the solana-keygen command.
  * @param {string} [filepath] - Path to load keypair from file. Defaults to ~/.config/solana/id.json
- * @returns {Promise<KeyPairSigner & TransactionSendingSigner>} The loaded wallet
+ * @returns {Promise<TransactionSigner>} The loaded wallet
  */
-export const loadWalletFromFile = async (filepath?: string): Promise<KeyPairSigner & TransactionSendingSigner> => {
+export const loadWalletFromFile = async (filepath?: string): Promise<TransactionSigner> => {
   // Node-specific imports
   const path = await import("node:path");
   const { readFile } = await import("node:fs/promises");
@@ -152,9 +152,9 @@ export const loadWalletFromFile = async (filepath?: string): Promise<KeyPairSign
 /**
  * Loads a wallet (KeyPairSigner) from an environment variable. The keypair should be in the same 'array of numbers' format as used by solana-keygen.
  * @param {string} variableName - Name of environment variable containing the keypair
- * @returns {KeyPairSigner & TransactionSendingSigner} The loaded wallet
+ * @returns {TransactionSigner} The loaded wallet
  */
-export const loadWalletFromEnvironment = (variableName: string): KeyPairSigner & TransactionSendingSigner => {
+export const loadWalletFromEnvironment = (variableName: string): TransactionSigner => {
   const privateKeyString = process.env[variableName];
   if (!privateKeyString) {
     throw new Error(`Please set '${variableName}' in environment.`);

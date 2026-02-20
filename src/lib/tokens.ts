@@ -28,7 +28,7 @@ import {
   getBurnCheckedInstruction as getBurnCheckedInstructionToken2022,
   getCloseAccountInstruction as getCloseAccountInstructionToken2022,
 } from "@solana-program/token-2022";
-import { createSolanaRpcFromTransport, KeyPairSigner, TransactionSendingSigner } from "@solana/kit";
+import { createSolanaRpcFromTransport, KeyPairSigner, TransactionSigner } from "@solana/kit";
 import { sendTransactionFromInstructionsFactory } from "./transactions";
 import { getCreateAccountInstruction, getTransferSolInstruction } from "@solana-program/system";
 import {
@@ -52,7 +52,7 @@ export const transferLamportsFactory = (
     maximumClientSideRetries = 0,
     abortSignal = null,
   }: {
-    source: TransactionSendingSigner;
+    source: TransactionSigner;
     destination: Address;
     amount: Lamports;
     commitment?: Commitment;
@@ -93,7 +93,7 @@ export const transferTokensFactory = (
     abortSignal = null,
     useTokenExtensions = true,
   }: {
-    sender: TransactionSendingSigner;
+    sender: TransactionSigner;
     destination: Address;
     mintAddress: Address;
     amount: bigint;
@@ -186,7 +186,7 @@ const createClassicTokenMint = async ({
 }: {
   rpc: ReturnType<typeof createSolanaRpcFromTransport>;
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>;
-  mintAuthority: TransactionSendingSigner;
+  mintAuthority: TransactionSigner;
   decimals: number;
 }): Promise<Address> => {
   // Dynamic import for classic token program functions
@@ -239,7 +239,7 @@ const createTokenExtensionsMint = async ({
 }: {
   rpc: ReturnType<typeof createSolanaRpcFromTransport>;
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>;
-  mintAuthority: TransactionSendingSigner;
+  mintAuthority: TransactionSigner;
   decimals: number;
   name: string;
   symbol: string;
@@ -359,7 +359,7 @@ export const createTokenMintFactory = (
   rpc: ReturnType<typeof createSolanaRpcFromTransport>,
   sendTransactionFromInstructions: ReturnType<typeof sendTransactionFromInstructionsFactory>,
 ): ((params: {
-  mintAuthority: TransactionSendingSigner;
+  mintAuthority: TransactionSigner;
   decimals: number;
   name?: string;
   symbol?: string;
@@ -376,7 +376,7 @@ export const createTokenMintFactory = (
     additionalMetadata = {},
     useTokenExtensions = true,
   }: {
-    mintAuthority: TransactionSendingSigner;
+    mintAuthority: TransactionSigner;
     decimals: number;
     name?: string;
     symbol?: string;
@@ -388,7 +388,6 @@ export const createTokenMintFactory = (
       if (!name || !symbol || !uri) {
         throw new Error("name, symbol, and uri are required when useTokenExtensions is true");
       }
-
       return createTokenExtensionsMint({
         rpc,
         sendTransactionFromInstructions,
@@ -417,7 +416,7 @@ export const mintTokensFactory = (
 ) => {
   const mintTokens = async (
     mintAddress: Address,
-    mintAuthority: TransactionSendingSigner,
+    mintAuthority: TransactionSigner,
     amount: bigint,
     destination: Address,
     useTokenExtensions = true,
@@ -694,7 +693,7 @@ export const updateTokenMetadataFactory = (
     commitment = "confirmed",
   }: {
     mintAddress: Address;
-    updateAuthority: TransactionSendingSigner;
+    updateAuthority: TransactionSigner;
     name?: string;
     symbol?: string;
     uri?: string;
@@ -941,7 +940,7 @@ export const burnTokensFactory = (
     abortSignal = null,
   }: {
     mintAddress: Address;
-    owner: TransactionSendingSigner;
+    owner: TransactionSigner;
     amount: bigint;
     useTokenExtensions?: boolean;
     skipPreflight?: boolean;
@@ -1013,7 +1012,7 @@ export const closeTokenAccountFactory = (
     maximumClientSideRetries = 0,
     abortSignal = null,
   }: {
-    owner: TransactionSendingSigner;
+    owner: TransactionSigner;
     tokenAccount?: Address;
     wallet?: Address;
     mint?: Address;

@@ -1,13 +1,13 @@
 import { describe, test, before } from "node:test";
 import assert from "node:assert";
 import { connect, Connection } from "..";
-import { KeyPairSigner, lamports, TransactionSendingSigner } from "@solana/kit";
+import { KeyPairSigner, lamports, TransactionSigner } from "@solana/kit";
 import { getTransferSolInstruction } from "@solana-program/system";
 import { SOL } from "../lib/constants";
 
 describe("Send Transaction From Instructions", () => {
-  let sender: KeyPairSigner & TransactionSendingSigner;
-  let recipient: KeyPairSigner & TransactionSendingSigner;
+  let sender: TransactionSigner;
+  let recipient: TransactionSigner;
   let connection: Connection;
 
   before(async () => {
