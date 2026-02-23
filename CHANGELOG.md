@@ -4,6 +4,13 @@
 
 No new features for the next release yet, but add them here when you make them!
 
+## Kite version 3.2.1
+
+### Fixes
+
+- Updated all functions that accept signers (`sendTransactionFromInstructions`, `createTokenMint`, `mintTokens`, `transferTokens`, `transferLamports`, `updateTokenMetadata`, `createWallet`, `createWallets`, `loadWalletFromFile`, `loadWalletFromEnvironment`) to accept `TransactionSigner` instead of `TransactionSendingSigner`, allowing a broader range of signer types
+- Updated `@isaacs/brace-expansion` and `minimatch` dependencies to fix security issues.
+
 ## Kite version 3.2.0
 
 ### Additions
