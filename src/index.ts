@@ -3,6 +3,7 @@ export { SOL, TOKEN_PROGRAM, TOKEN_EXTENSIONS_PROGRAM, ASSOCIATED_TOKEN_PROGRAM 
 export type { Connection, KitePluginConfig } from "./lib/connect";
 export type { ErrorWithTransaction } from "./lib/transactions";
 
+
 // Factory functions for tree shaking - import only what you need
 export { airdropIfRequiredFactory, getLamportBalanceFactory, watchLamportBalanceFactory } from "./lib/sol";
 export {
@@ -45,3 +46,17 @@ export { getPDAAndBump } from "./lib/pdas";
 //   "RpcTransport" is imported from external module "@solana/kit" but never used
 // This type is used in the Connection interface and connect function signatures, so it needs to be available in the generated .d.ts files
 export type { RpcTransport } from "@solana/kit";
+
+export {
+  getQuickNodePriorityFeesFactory,
+  getAssetsByOwnerFactory,
+  getAssetFactory,
+} from "./lib/quicknode";
+export type {
+  QuickNodePriorityFees,
+  QuickNodePriorityFeeOptions,
+  DigitalAsset,
+  DigitalAssetContent,
+  GetAssetsByOwnerResult,
+  GetAssetsByOwnerOptions,
+} from "./lib/quicknode";
